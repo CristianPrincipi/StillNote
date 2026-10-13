@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug builds only: lets the app talk to tools/fake_notion.py over plain HTTP. -->
+    <application android:usesCleartextTraffic="true" />
+
+</manifest>

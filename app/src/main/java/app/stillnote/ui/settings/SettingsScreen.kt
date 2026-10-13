@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -100,6 +102,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, modifier: M
 
 @Composable
 private fun NotionSection(viewModel: SettingsViewModel) {
+    val chosenId by viewModel.chosenDatabaseId.collectAsStateWithLifecycle()
+    val status = viewModel.status
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Overline("Notion")
         HandText("Integration token", 19f)
@@ -109,6 +113,16 @@ private fun NotionSection(viewModel: SettingsViewModel) {
             11.5f,
             lineHeight = 1.55f,
         )
+        if (viewModel.databases.isNotEmpty()) {
+            Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Overline("Database", Modifier.padding(bottom = 4.dp))
+                viewModel.databases.forEach { database ->
+                    ChoiceRow(selected = database.id == chosenId, onPick = { viewModel.choose(database) }, minHeight = 52.dp) {
+                        HandText(database.name, 19f, maxLines = 1)
+                    }
+                }
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,10 +135,12 @@ private fun NotionSection(viewModel: SettingsViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                viewModel.connectedDatabase?.let { database ->
+                if (status is NotionStatus.Connected) {
                     DoneMark(16.dp, tickSize = 10.dp, tickStroke = 3.4f)
-                    MonoText("Connected to “$database”", 12f, color = StillColors.ink)
+                } else {
+                    HandCircle(16.dp, stroke = 1.5.dp)
                 }
+                MonoText(status.text(), 12f, color = StillColors.ink)
             }
             // The pill is 44 tall, as in the mockup; its 48 dp touch target overflows the row.
             Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
@@ -142,6 +158,17 @@ private fun NotionSection(viewModel: SettingsViewModel) {
             }
         }
     }
+}
+
+private fun NotionStatus.text(): String = when (this) {
+    NotionStatus.NotConnected -> "Not connected"
+    NotionStatus.Checking -> "Checking…"
+    NotionStatus.TokenRejected -> "Notion rejected this token"
+    NotionStatus.Unreachable -> "Couldn't reach Notion"
+    NotionStatus.NoDatabases -> "No database is shared with this token"
+    NotionStatus.PickDatabase -> "Pick a database"
+    is NotionStatus.Unusable -> "“$name” needs ${missing.joinToString(" and ")}"
+    is NotionStatus.Connected -> "Connected to “$name”"
 }
 
 @Composable
@@ -257,6 +284,16 @@ private fun TypographySection(current: HandFont?, onPick: (HandFont) -> Unit) {
 
 @Composable
 private fun FontOption(font: HandFont, selected: Boolean, onPick: () -> Unit) {
+    ChoiceRow(selected, onPick, minHeight = 66.dp) {
+        val sample = handStyle(font.family, 21f, lineHeight = 1.25f)
+        BasicText("Water the plants", Modifier.trimLineBox(rememberLineBoxTrim(sample)), style = sample)
+        MonoText(font.label, 11f, letterSpacing = 0.08.em)
+    }
+}
+
+/** One of a set of choices: the chosen one becomes a sheet of card with a filled radio button. */
+@Composable
+private fun ChoiceRow(selected: Boolean, onPick: () -> Unit, minHeight: Dp, content: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(2.dp)
     val sheet = if (!selected) Modifier else Modifier
         .paperShadow(shape, Shadows.postIt)
@@ -272,16 +309,12 @@ private fun FontOption(font: HandFont, selected: Boolean, onPick: () -> Unit) {
                 role = Role.RadioButton,
                 onClick = onPick,
             )
-            .heightIn(min = 66.dp)
+            .heightIn(min = minHeight)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val sample = handStyle(font.family, 21f, lineHeight = 1.25f)
-            BasicText("Water the plants", Modifier.trimLineBox(rememberLineBoxTrim(sample)), style = sample)
-            MonoText(font.label, 11f, letterSpacing = 0.08.em)
-        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp), content = content)
         HandCircle(22.dp) {
             if (selected) Box(Modifier.size(10.dp).background(StillColors.ink, CircleShape))
         }

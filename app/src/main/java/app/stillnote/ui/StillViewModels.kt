@@ -18,5 +18,8 @@ val StillViewModels: ViewModelProvider.Factory = viewModelFactory {
     initializer { TodayViewModel(app.tasks, app.clock) }
     initializer { NewTaskViewModel(app.tasks, app.clock) }
     initializer { CalendarViewModel(app.tasks, app.clock) }
-    initializer { SettingsViewModel(app.settings) }
+    initializer {
+        val app = app
+        SettingsViewModel(app.settings, app.account, startSync = app::syncNow)
+    }
 }

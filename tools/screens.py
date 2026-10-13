@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Screenshots every designed screen on a running emulator and compares it with its mockup.
+"""Screenshots the designed screens on a running emulator and compares each with its mockup.
 
     python3 tools/screens.py
+
+Settings and the Notion states are covered by tools/notion_e2e.py.
 
 Needs adb, Pillow, and the debug build installed on an emulator set to the mockup's page:
 
@@ -50,15 +52,39 @@ def nodes():
     return found
 
 
-def tap(label, times=1):
-    for name, (x0, y0, x1, y1) in nodes():
-        if name == label:
-            for _ in range(times):
-                adb("shell", "input", "tap", str((x0 + x1) // 2), str((y0 + y1) // 2))
-                time.sleep(0.3)
-            time.sleep(0.6)
+def tap(label, times=1, nth=0):
+    """Taps the middle of the thing labelled [label]; [nth] picks among several with the same label."""
+    found = [bounds for name, bounds in nodes() if name == label]
+    if len(found) <= nth:
+        sys.exit(f"nothing on screen is labelled {label!r}")
+    x0, y0, x1, y1 = found[nth]
+    for _ in range(times):
+        adb("shell", "input", "tap", str((x0 + x1) // 2), str((y0 + y1) // 2))
+        time.sleep(0.3)
+    time.sleep(0.6)
+
+
+def launch(*extras):
+    """Restarts the app. Debug builds accept `--ez demo true` and `--es notion_url <url>`."""
+    adb("shell", "am", "force-stop", APP)
+    adb("shell", "am", "start", "-n", APP + "/.MainActivity", *extras)
+    time.sleep(4)
+
+
+def wait_for_label(label, seconds=20):
+    """Waits until something labelled [label] is on screen; a first launch after an install is slow."""
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        if any(name == label for name, _ in nodes()):
+            time.sleep(1)  # let the list finish fading in
             return
-    sys.exit(f"nothing on screen is labelled {label!r}")
+        time.sleep(0.5)
+    sys.exit(f"{label!r} never appeared")
+
+
+def type_text(value):
+    adb("shell", "input", "text", value.replace(" ", "%s"))
+    time.sleep(0.6)
 
 
 def back():
@@ -91,9 +117,9 @@ def compare(name):
 
 def main():
     os.makedirs(os.path.join(OUT, "compare"), exist_ok=True)
-    adb("shell", "am", "force-stop", APP)
-    adb("shell", "am", "start", "-n", APP + "/.MainActivity")
-    time.sleep(4)
+    # Demo mode shows the mockups' sample tasks on their fixed "today", whatever is on the phone.
+    launch("--ez", "demo", "true")
+    wait_for_label("Mark Reply to Marco about Friday as done")
 
     shot("01-today")
 
@@ -103,7 +129,7 @@ def main():
     back()  # hides the keyboard, which the mockup doesn't draw
     shot("02-new-task")
 
-    adb("shell", "input", "text", "Buy a birthday card for Giulia".replace(" ", "%s"))
+    type_text("Buy a birthday card for Giulia")
     tap("Set date and time")
     tap("Next day")
     shown = next(label for label, _ in nodes() if re.fullmatch(r"\d\d:\d\d", label))
@@ -121,11 +147,9 @@ def main():
     tap("PROJECTS")
     shot("06-projects")  # a blank page for now, so there is nothing to compare it with
     tap("TASKS")
-    tap("Settings")
-    shot("07-settings")
-    back()
 
-    for name in ("01-today", "02-new-task", "03-new-task-date-time", "04-new-task-priority", "05-calendar", "07-settings"):
+    # Settings is compared by tools/notion_e2e.py, which can show it connected like the mockup.
+    for name in ("01-today", "02-new-task", "03-new-task-date-time", "04-new-task-priority", "05-calendar"):
         print(f"{name}: {compare(name):.1%} of pixels differ")
 
 

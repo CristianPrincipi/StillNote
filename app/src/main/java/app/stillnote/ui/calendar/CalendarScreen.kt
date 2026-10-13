@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.Priority
 import app.stillnote.data.Task
+import app.stillnote.ui.after
 import app.stillnote.ui.components.DoneMark
 import app.stillnote.ui.components.HandCircle
 import app.stillnote.ui.components.HandText
@@ -112,7 +113,7 @@ private fun CalendarHeader(state: CalendarUiState, onPrevious: () -> Unit, onNex
                 }
             }
         }
-        MonoText(state.summary(), 12f)
+        MonoText(state.sync.after(state.summary()), 12f)
     }
 }
 

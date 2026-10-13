@@ -38,7 +38,7 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
     val draft: StateFlow<NewTaskDraft?> = _draft.asStateFlow()
 
     fun open() {
-        _draft.value = NewTaskDraft(today = clock.today())
+        _draft.value = NewTaskDraft(today = clock.today.value)
     }
 
     fun dismiss() {

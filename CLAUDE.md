@@ -29,16 +29,33 @@ These settle items DESIGN.md leaves open (§7) or change what it shows.
 - **No design yet, so no action:** tapping a post-it's body.
 - **App id** `app.stillnote`, **minSdk** 26.
 
-## Build and run
+Notion (milestone 2):
 
-Milestone 1 runs on fake data (`FakeTaskRepository`, with "today" fixed to Mon 12 Oct 2026 so it matches the mockups). There is no Notion code yet.
+- **The app works without Notion.** Tasks live in a database on the phone, and Notion sync is optional. A Welcome screen offering "add a token" or "use without Notion" is still to be designed; until then the app opens on Today with no Notion, and it is connected from Settings.
+- **Connecting uploads.** Tasks made without Notion are created in the chosen database when it is connected. Saving an empty token disconnects: Notion's tasks leave the phone and stay in Notion.
+- **Database:** after Save, Settings always lists the databases the token can see, and the user picks one. It needs a date and a checkbox property.
+- **Property roles** are found by type, then by name, and stored by property id. There is no mapping screen. "Done" is a checkbox only; a Status property is not supported yet.
+- **Sync states:** the header summary gains "syncing", "offline" or "couldn't sync" only when needed. A change Notion refuses shows a paper strip, "Couldn't save." with Retry.
+- **New tasks** are written with Project "Task" and, for no priority, the database's "None" option.
+
+## Build and run
 
 Gradle needs `JAVA_HOME` (JDK 21) and `ANDROID_HOME`; neither is set globally on the dev machine, so pass them on the command line.
 
 ```sh
-./gradlew :app:installDebug      # build and install on the running emulator or phone
+./gradlew :app:installDebug              # build and install on the running emulator or phone
+./gradlew :app:testDebugUnitTest         # Notion client and property mapping, on the JVM
+./gradlew :app:connectedDebugAndroidTest # the sync engine against real SQLite, on the emulator
 ./gradlew :app:lintDebug
-python3 tools/screens.py         # screenshot every screen and compare it with its mockup
+python3 tools/screens.py                 # screenshot the designed screens and compare with the mockups
+python3 tools/notion_e2e.py              # drive the app against a fake Notion: connect, sync, offline, errors
 ```
 
-`tools/screens.py` explains the emulator display it expects (390×844 dp at 2×). Its output goes to `screenshots/`, which git ignores.
+Both scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `notion_e2e.py` wipes the app's data first.
+
+Debug builds take two launch extras, used by those scripts:
+
+- `--ez demo true` shows the mockups' sample tasks with "today" fixed to Mon 12 Oct 2026.
+- `--es notion_url <url>` sends Notion calls to `tools/fake_notion.py` instead; it is remembered until given an empty value or the app's data is cleared.
+
+How the data flows: screens read and write `LocalTaskRepository` (Room). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock. The token is encrypted with a Keystore key (`KeystoreTokenVault`).

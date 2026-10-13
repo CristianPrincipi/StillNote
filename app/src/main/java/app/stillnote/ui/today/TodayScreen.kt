@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.Task
+import app.stillnote.ui.after
 import app.stillnote.ui.components.DoneMark
 import app.stillnote.ui.components.HandCircle
 import app.stillnote.ui.components.HandText
@@ -61,20 +62,20 @@ fun TodayScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
+    val couldNotSave by viewModel.couldNotSave.collectAsStateWithLifecycle()
 
     Box(modifier.fillMaxSize()) {
         PaperPage {
             TodayHeader(state, onOpenSettings)
             TaskList(state, viewModel, Modifier.weight(1f))
         }
-        deleted?.let { task ->
-            UndoStrip(
-                title = task.title,
-                onUndo = viewModel::undoDelete,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, end = 100.dp, bottom = 29.dp),
-            )
+        val strip = Modifier
+            .align(Alignment.BottomStart)
+            .padding(start = 20.dp, end = 100.dp, bottom = 29.dp)
+        val task = deleted
+        when {
+            task != null -> PaperStrip("Deleted “${task.title}”", "Undo", viewModel::undoDelete, strip)
+            couldNotSave -> PaperStrip("Couldn't save.", "Retry", viewModel::retrySaving, strip)
         }
         AddPad(
             onClick = onAddTask,
@@ -95,7 +96,7 @@ private fun TodayHeader(state: TodayUiState, onOpenSettings: () -> Unit) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Overline(state.date.overline(), size = 12f, weight = FontWeight.Normal)
             ScreenTitle("Today", highlighted = true)
-            MonoText("${state.open.size} to do · ${state.done.size} done", 12f)
+            MonoText(state.sync.after("${state.open.size} to do · ${state.done.size} done"), 12f)
         }
         TapTarget(
             onClick = onOpenSettings,
@@ -246,9 +247,12 @@ private fun AddPad(onClick: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** Shown for a few seconds after a delete. Not in the mockups: a plain strip of paper. */
+/**
+ * A strip of paper beside the "+" with one action on canary tape: "Undo" after a delete, or
+ * "Retry" when a change couldn't be saved. Not in the mockups.
+ */
 @Composable
-private fun UndoStrip(title: String, onUndo: () -> Unit, modifier: Modifier = Modifier) {
+private fun PaperStrip(message: String, action: String, onAction: () -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(2.dp)
     Row(
         modifier = modifier
@@ -260,10 +264,10 @@ private fun UndoStrip(title: String, onUndo: () -> Unit, modifier: Modifier = Mo
             .padding(start = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MonoText("Deleted “$title”", 12f, Modifier.weight(1f), maxLines = 1)
-        TapTarget(onUndo, description = null, Modifier.heightIn(min = TapSize).padding(horizontal = 12.dp)) {
+        MonoText(message, 12f, Modifier.weight(1f), maxLines = 1)
+        TapTarget(onAction, description = null, Modifier.heightIn(min = TapSize).padding(horizontal = 12.dp)) {
             HandText(
-                "Undo",
+                action,
                 19f,
                 Modifier
                     .rotate(-2f)

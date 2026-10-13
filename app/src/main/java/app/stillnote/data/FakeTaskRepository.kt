@@ -3,13 +3,14 @@ package app.stillnote.data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
 
-/** In-memory tasks for milestone 1: the sample data from design/DESIGN.md §6 and Calendar.dc.html. */
+/** In-memory sample tasks from design/DESIGN.md §6 and Calendar.dc.html, for comparing debug builds with the mockups. */
 class FakeTaskRepository : TaskRepository {
     private val tasks = MutableStateFlow(FakeData.tasks())
     private val trashed = mutableMapOf<String, Pair<Int, Task>>()
@@ -47,6 +48,11 @@ class FakeTaskRepository : TaskRepository {
         val (index, task) = trashed.remove(id) ?: return
         tasks.update { all -> all.toMutableList().apply { add(index.coerceAtMost(size), task) } }
     }
+
+    override val syncStatus: Flow<SyncStatus> = flowOf(SyncStatus.Idle)
+    override val hasFailedChanges: Flow<Boolean> = flowOf(false)
+    override fun refresh(from: LocalDate, to: LocalDate) = Unit
+    override fun retryFailedChanges() = Unit
 }
 
 internal object FakeData {
