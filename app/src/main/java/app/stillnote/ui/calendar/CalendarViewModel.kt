@@ -3,9 +3,11 @@ package app.stillnote.ui.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.AppClock
+import app.stillnote.data.SyncStatus
 import app.stillnote.data.Task
 import app.stillnote.data.TaskOrder
 import app.stillnote.data.TaskRepository
+import app.stillnote.ui.calm
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,42 +42,49 @@ data class CalendarUiState(
     val weeks: List<List<DayCell>> = emptyList(),
     val selected: LocalDate? = null,
     val selectedTasks: List<Task> = emptyList(),
+    val sync: SyncStatus = SyncStatus.Idle,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CalendarViewModel(private val tasks: TaskRepository, clock: AppClock) : ViewModel() {
-    private val today = clock.today()
-    private val currentMonth = YearMonth.from(today)
+class CalendarViewModel(private val tasks: TaskRepository, private val clock: AppClock) : ViewModel() {
+    private val month = MutableStateFlow(YearMonth.from(clock.today.value))
+    private val selected = MutableStateFlow<LocalDate?>(clock.today.value)
 
-    private val month = MutableStateFlow(currentMonth)
-    private val selected = MutableStateFlow<LocalDate?>(today)
-
-    val state: StateFlow<CalendarUiState> = month
-        .flatMapLatest { month ->
-            tasks.observeTasks(month.atDay(1), month.atEndOfMonth()).combine(selected) { all, day ->
-                build(month, day?.takeIf { YearMonth.from(it) == month }, all)
+    val state: StateFlow<CalendarUiState> = combine(clock.today, month, ::Pair)
+        .flatMapLatest { (today, month) ->
+            combine(
+                tasks.observeTasks(month.atDay(1), month.atEndOfMonth()),
+                selected,
+                tasks.syncStatus.calm(),
+            ) { all, day, sync ->
+                build(today, month, day?.takeIf { YearMonth.from(it) == month }, all).copy(sync = sync)
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarUiState(currentMonth, today))
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            CalendarUiState(month.value, clock.today.value),
+        )
 
-    fun previousMonth() {
-        selected.value = null
-        month.value = month.value.minusMonths(1)
-    }
+    fun previousMonth() = show(month.value.minusMonths(1))
 
     /** Past months only: the arrow stops at the current month, which reselects today. */
     fun nextMonth() {
-        if (month.value >= currentMonth) return
-        val next = month.value.plusMonths(1)
-        selected.value = today.takeIf { next == currentMonth }
-        month.value = next
+        if (month.value < YearMonth.from(clock.today.value)) show(month.value.plusMonths(1))
     }
 
     fun select(date: LocalDate) {
         selected.value = date
     }
 
-    private fun build(month: YearMonth, selected: LocalDate?, all: List<Task>): CalendarUiState {
+    private fun show(next: YearMonth) {
+        val today = clock.today.value
+        selected.value = today.takeIf { YearMonth.from(it) == next }
+        month.value = next
+        tasks.refresh(next.atDay(1), next.atEndOfMonth())
+    }
+
+    private fun build(today: LocalDate, month: YearMonth, selected: LocalDate?, all: List<Task>): CalendarUiState {
         val byDay = all.groupBy { it.date }.mapValues { (_, tasks) -> tasks.sortedWith(TaskOrder.calendarDay) }
         val first = month.atDay(1)
         val gridStart = first.minusDays((first.dayOfWeek.value - 1).toLong())
@@ -98,10 +107,10 @@ class CalendarViewModel(private val tasks: TaskRepository, clock: AppClock) : Vi
         return CalendarUiState(
             month = month,
             today = today,
-            isCurrentMonth = month == currentMonth,
+            isCurrentMonth = month == YearMonth.from(today),
             done = all.count { it.done },
-            missed = all.count { !it.done && it.date < today },
-            toCome = all.count { !it.done && it.date >= today },
+            missed = all.count { !it.done && it.date?.isBefore(today) == true },
+            toCome = all.count { !it.done && it.date?.isBefore(today) == false },
             weeks = weeks,
             selected = selected,
             selectedTasks = selected?.let { byDay[it] }.orEmpty(),

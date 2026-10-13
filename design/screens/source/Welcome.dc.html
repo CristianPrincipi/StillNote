@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; background-color: #F3EEE4; background-image: radial-gradient(circle, #D8CEBD 1px, transparent 1.4px); background-size: 22px 22px; background-position: 11px 11px; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <div aria-hidden="true" style="flex: 1; position: relative; min-height: 0">
+    <span style="position: absolute; left: 142px; top: 128px; width: 186px; height: 186px; background: #CFE1EA; border-radius: 2px 2px 3px 22px / 2px 2px 3px 8px; transform: rotate(9deg); box-shadow: 0 1px 1px rgba(42, 38, 33, 0.07), 0 18px 20px -14px rgba(42, 38, 33, 0.55)"></span>
+    <span style="position: absolute; left: 50px; top: 156px; width: 186px; height: 186px; background: #F4B795; border-radius: 2px 2px 3px 22px / 2px 2px 3px 8px; transform: rotate(-8deg); box-shadow: 0 1px 1px rgba(42, 38, 33, 0.07), 0 18px 20px -14px rgba(42, 38, 33, 0.55)"></span>
+    <div style="position: absolute; left: 82px; top: 188px; width: 226px; height: 226px; box-sizing: border-box; padding: 0 28px; display: flex; flex-direction: column; justify-content: center; background: #F7E08C; border-radius: 2px 2px 3px 26px / 2px 2px 3px 9px; transform: rotate(-1.5deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 30px 34px -22px rgba(42, 38, 33, 0.7)">
+      <span style="position: absolute; top: -12px; left: 82px; width: 64px; height: 24px; background: rgba(252, 250, 245, 0.6); transform: rotate(3deg)"></span>
+      <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 66px; line-height: 1">Hello.</span>
+    </div>
+  </div>
+
+  <div style="flex: none; display: flex; flex-direction: column; gap: 22px; padding: 0 28px 30px 28px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 30px; line-height: 1.2">Your tasks, on little notes.</h1>
+      <p style="margin: 0; font-size: 12.5px; line-height: 1.6; color: #4F463D">Keep them in sync with your Notion workspace, or keep everything on this phone.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <a href="SetupToken.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 54px; border-radius: 999px; background: #2A2621; color: #F7E08C; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.08em">
+        Connect Notion
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+      </a>
+      <a href="SetupStyle.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 52px; box-sizing: border-box; border: 1.4px solid #2A2621; border-radius: 999px; color: #2A2621; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.08em">Use without Notion</a>
+    </div>
+    <p style="margin: -8px 0 0 0; font-size: 11px; line-height: 1.6; text-align: center; color: #4F463D">Without Notion, tasks stay on this phone.<br>You can connect later in Settings.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

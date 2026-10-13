@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=390, initial-scale=1">
-<title>New task — static preview</title>
-<!-- Static render of the default state of design/screens/source/AddTask.dc.html. Reference only: not app code. -->
+<title>New task: date and time — static preview</title>
+<!-- Static render of the default state of design/screens/source/AddTaskWhen.dc.html. Reference only: not app code. -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Kalam:wght@300;400;700&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0}
@@ -149,19 +149,63 @@ body{margin:0}
 
   <a href="Main.dc.html" aria-label="Close without saving" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; background: rgba(42, 38, 33, 0.42)"></a>
 
-  <div role="dialog" aria-label="New task" style="position: absolute; left: 24px; top: 176px; width: 342px; min-height: 300px; box-sizing: border-box; padding: 28px 18px 14px 22px; display: flex; flex-direction: column; gap: 8px; background: #F7E08C; border-radius: 2px 2px 3px 26px / 2px 2px 3px 9px; transform: rotate(-1.2deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75)">
+  <div role="dialog" aria-label="New task" style="position: absolute; left: 24px; top: 138px; width: 342px; box-sizing: border-box; padding: 28px 18px 14px 22px; display: flex; flex-direction: column; gap: 8px; background: #F7E08C; border-radius: 2px 2px 3px 26px / 2px 2px 3px 9px; transform: rotate(-1.2deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75)">
     <span aria-hidden="true" style="position: absolute; top: -14px; left: 114px; width: 112px; height: 28px; background: rgba(252, 250, 245, 0.58); border-left: 1px dashed rgba(42, 38, 33, 0.14); border-right: 1px dashed rgba(42, 38, 33, 0.14); transform: rotate(-3deg)"></span>
 
-    <label for="task-name" style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">New task</label>
-    <textarea id="task-name" rows="4" placeholder="What needs doing?" style="flex: 1; width: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: none; resize: none; background: transparent; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 27px; line-height: 1.3; color: #2A2621"></textarea>
+    <label for="task-name-when" style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">New task</label>
+    <textarea id="task-name-when" rows="2" placeholder="What needs doing?" style="width: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: none; resize: none; background: transparent; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 27px; line-height: 1.3; color: #2A2621">Buy a birthday card for Giulia</textarea>
 
-    <div style="display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border: 1.2px solid #2A2621; border-radius: 999px; background: rgba(252, 250, 245, 0.45); font-size: 12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"></circle><path d="M12 7.2V12l3.2 2"></path></svg>
+        Tomorrow, 18:00
+      </span>
+    </div>
+
+    <div style="margin: 6px -18px 0 -22px; border-top: 1.5px dashed rgba(42, 38, 33, 0.38)"></div>
+
+    <section aria-label="When" style="display: flex; flex-direction: column; gap: 6px; padding-top: 4px">
+      <h2 style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">When</h2>
+
+      <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; min-height: 64px">
+        <button type="button" aria-label="Previous day" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; opacity: 1; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
+        </button>
+        <div aria-live="polite" style="display: flex; flex-direction: column; align-items: center; gap: 0">
+          <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 28px; line-height: 1.15">Tomorrow</span>
+          <span style="font-size: 11px; letter-spacing: 0.16em; color: #4F463D">TUE 13 OCT</span>
+        </div>
+        <button type="button" aria-label="Next day" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
+        </button>
+      </div>
+
+      <div style="margin: 0 34px; border-top: 1px solid rgba(42, 38, 33, 0.16)"></div>
+
+      <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; min-height: 64px">
+        <button type="button" aria-label="30 minutes earlier" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
+        </button>
+        <div aria-live="polite" style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+          <span style="font-size: 30px; font-weight: 500; letter-spacing: 0.04em; line-height: 1.1">18:00</span>
+          <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">Evening</span>
+        </div>
+        <button type="button" aria-label="30 minutes later" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px">
       <div style="display: flex; align-items: center; gap: 2px; margin-left: -10px">
-        <a href="AddTaskWhen.dc.html" aria-label="Set date and time" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px">
+        <a href="AddTask.dc.html" aria-label="Hide date and time" aria-expanded="true" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px; background: rgba(42, 38, 33, 0.12)">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"></circle><path d="M12 7.2V12l3.2 2"></path></svg>
         </a>
         <a href="AddTaskPriority.dc.html" aria-label="Set priority" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 21V3.8"></path><path d="M5.5 4h12l-2.6 4.4 2.6 4.4h-12"></path></svg>
+        </a>
+        <a href="ProjectNewTask.dc.html" aria-label="Set project" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="13" height="12" rx="1"></rect><path d="M7.5 8.5V4.5h13v11.5h-4"></path></svg>
         </a>
       </div>
       <a href="Main.dc.html" aria-label="Save task" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #2A2621; color: #F7E08C">

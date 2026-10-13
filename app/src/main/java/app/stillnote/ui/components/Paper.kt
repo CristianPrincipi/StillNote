@@ -9,7 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
@@ -88,4 +95,18 @@ fun Modifier.inkBorder(width: Dp, color: Color, shape: Shape): Modifier = drawWi
         drawContent()
         translate(stroke / 2, stroke / 2) { drawPath(path, color, style = Stroke(stroke)) }
     }
+}
+
+/**
+ * Keeps a keyed list at its top when rows arrive above the first one. Left alone, a lazy list
+ * holds on to the row it was showing, so a task synced in above it would stay out of sight.
+ * [firstKey] is the key of the first row; the list is only moved if the user hadn't scrolled.
+ */
+@Composable
+fun LazyListState.StayAtTop(firstKey: Any?) {
+    var userAtTop by remember { mutableStateOf(true) }
+    LaunchedEffect(this) {
+        snapshotFlow { isScrollInProgress }.collect { scrolling -> if (!scrolling) userAtTop = !canScrollBackward }
+    }
+    LaunchedEffect(firstKey) { if (userAtTop && canScrollBackward) scrollToItem(0) }
 }

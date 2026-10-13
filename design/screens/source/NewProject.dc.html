@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New project</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EEE4; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; filter: blur(1.5px)">
+    <dc-import name="Projects" hint-size="390px,844px"></dc-import>
+  </div>
+
+  <a href="Projects.dc.html" aria-label="Close without saving" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; background: rgba(42, 38, 33, 0.42)"></a>
+
+  <div role="dialog" aria-label="New project" style="position: absolute; left: 24px; top: 200px; width: 342px; box-sizing: border-box; display: flex; flex-direction: column; background-color: #FCFAF5; background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 23px, #D3E2EA 23px, #D3E2EA 24px); border-radius: 2px; transform: rotate(-1deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75)">
+    <span aria-hidden="true" style="position: absolute; top: -14px; left: 114px; width: 112px; height: 28px; background: rgba(243, 238, 228, 0.75); border-left: 1px dashed rgba(42, 38, 33, 0.14); border-right: 1px dashed rgba(42, 38, 33, 0.14); transform: rotate(2deg)"></span>
+
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 26px 18px 0 20px; background: #FCFAF5; border-bottom: 1.2px solid #E39C86">
+      <label for="project-name" style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">New project</label>
+      <input id="project-name" type="text" value="{{name}}" onChange="{{onName}}" placeholder="Name it…" autocomplete="off" style="width: 100%; box-sizing: border-box; margin: 0; padding: 0 0 8px 0; border: 0; outline: none; background: transparent; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 32px; line-height: 1.25; color: #2A2621">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 22px; padding: 12px 18px 16px 20px">
+      <p style="margin: 0; font-size: 11.5px; line-height: 24px; color: #4F463D">It gets its own card on this page, and syncs to your Notion projects.</p>
+      <div style="display: flex; justify-content: flex-end">
+        <a href="Projects.dc.html" aria-label="Create project" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #2A2621; color: #F7E08C">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { name: 'Garden' };
+  }
+  renderVals() {
+    const s = this.state || { name: '' };
+    return {
+      name: s.name,
+      onName: (e) => this.setState({ name: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -7,22 +7,49 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.HandFont
 import app.stillnote.data.SettingsStore
+import app.stillnote.data.notion.NotionAccount
+import app.stillnote.data.notion.NotionException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val settings: SettingsStore) : ViewModel() {
+/** What Save last found out about the token, when it is something other than "connected". */
+enum class TokenProblem { Checking, Rejected, Unreachable }
+
+class SettingsViewModel(
+    private val settings: SettingsStore,
+    private val account: NotionAccount,
+    /** Starts a sync once there is something to sync with. */
+    private val startSync: () -> Unit,
+) : ViewModel() {
     val handFont: StateFlow<HandFont?> =
         settings.handFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // Milestone 1 has no Notion client: the field holds a stand-in and Save does nothing yet.
-    // The real token will live in the Keystore, never in code or logs.
-    var token by mutableStateOf(DEMO_TOKEN)
+    /** The connected database's name, or null without Notion. */
+    val database: StateFlow<String?> =
+        account.database.map { it?.name }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // The token is shown back to the user here and in setup, and nowhere else; it is never logged.
+    var token by mutableStateOf("")
         private set
     var tokenVisible by mutableStateOf(false)
         private set
-    val connectedDatabase: String? = "Tasks"
+    var problem by mutableStateOf<TokenProblem?>(null)
+        private set
+
+    init {
+        reload()
+    }
+
+    /** Re-reads the saved token, for when the setup steps may have changed it. */
+    fun reload() {
+        viewModelScope.launch {
+            token = account.token().orEmpty()
+            problem = if (account.tokenRejected.value) TokenProblem.Rejected else null
+        }
+    }
 
     fun updateToken(value: String) {
         token = value
@@ -32,13 +59,27 @@ class SettingsViewModel(private val settings: SettingsStore) : ViewModel() {
         tokenVisible = !tokenVisible
     }
 
-    fun save() = Unit
+    /** Checks the token with Notion again. An empty token disconnects. */
+    fun save() {
+        val entered = token.trim()
+        viewModelScope.launch {
+            if (entered.isEmpty()) {
+                account.signOut()
+                problem = null
+                return@launch
+            }
+            problem = TokenProblem.Checking
+            problem = try {
+                account.signIn(entered)
+                startSync()
+                null
+            } catch (e: NotionException) {
+                if (e.kind == NotionException.Kind.Unauthorized) TokenProblem.Rejected else TokenProblem.Unreachable
+            }
+        }
+    }
 
     fun setHandFont(font: HandFont) {
         viewModelScope.launch { settings.setHandFont(font) }
-    }
-
-    private companion object {
-        const val DEMO_TOKEN = "demo-token-not-a-secret!"
     }
 }

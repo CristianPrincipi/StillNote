@@ -8,7 +8,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.stillnote.StillNoteApp
 import app.stillnote.ui.calendar.CalendarViewModel
 import app.stillnote.ui.newtask.NewTaskViewModel
+import app.stillnote.ui.projects.ProjectsViewModel
 import app.stillnote.ui.settings.SettingsViewModel
+import app.stillnote.ui.setup.SetupViewModel
 import app.stillnote.ui.today.TodayViewModel
 
 private val CreationExtras.app: StillNoteApp get() = this[APPLICATION_KEY] as StillNoteApp
@@ -18,5 +20,13 @@ val StillViewModels: ViewModelProvider.Factory = viewModelFactory {
     initializer { TodayViewModel(app.tasks, app.clock) }
     initializer { NewTaskViewModel(app.tasks, app.clock) }
     initializer { CalendarViewModel(app.tasks, app.clock) }
-    initializer { SettingsViewModel(app.settings) }
+    initializer { ProjectsViewModel(app.tasks) }
+    initializer {
+        val app = app
+        SettingsViewModel(app.settings, app.account, startSync = app::syncNow)
+    }
+    initializer {
+        val app = app
+        SetupViewModel(app.settings, app.account, startSync = app::syncNow)
+    }
 }

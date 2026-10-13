@@ -50,12 +50,18 @@ val HandFont.family: FontFamily
         HandFont.Bookish -> NewsreaderFamily
     }
 
-val HandFont.label: String
+/** What the choice is called, as in "Handwritten". */
+val HandFont.title: String get() = name
+
+/** The typeface behind it, as in "Kalam". */
+val HandFont.fontName: String
     get() = when (this) {
-        HandFont.Handwritten -> "Handwritten · Kalam"
-        HandFont.Typewriter -> "Typewriter · Courier Prime"
-        HandFont.Bookish -> "Bookish · Newsreader"
+        HandFont.Handwritten -> "Kalam"
+        HandFont.Typewriter -> "Courier Prime"
+        HandFont.Bookish -> "Newsreader"
     }
+
+val HandFont.label: String get() = "$title · $fontName"
 
 /** The face used for the user's own words; Settings → Typography swaps it. */
 val LocalHandFont = staticCompositionLocalOf<FontFamily> { KalamFamily }

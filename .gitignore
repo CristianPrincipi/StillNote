@@ -22,3 +22,6 @@ secrets.properties
 # Captures
 /screenshots/
 *.hprof
+
+# Python
+__pycache__/

@@ -13,7 +13,8 @@ enum class Priority(val label: String, val marks: String) {
 data class Task(
     val id: String,
     val title: String,
-    val date: LocalDate,
+    /** Null for a task that came from Notion with no date; it only shows in its project. */
+    val date: LocalDate?,
     val time: LocalTime? = null,
     val priority: Priority = Priority.None,
     val project: String? = null,
@@ -25,7 +26,14 @@ data class TaskDraft(
     val date: LocalDate,
     val time: LocalTime? = null,
     val priority: Priority = Priority.None,
+    val project: String? = null,
 )
+
+/** A project and what its card shows: the tasks still open, and how many are done. */
+data class Project(val name: String, val open: List<Task>, val done: Int)
+
+/** What the connected database can hold. Without Notion, everything is on. */
+data class Features(val priority: Boolean = true, val projects: Boolean = true)
 
 object TaskOrder {
     /** Time ascending with untimed tasks last, then High to None. */
@@ -35,4 +43,9 @@ object TaskOrder {
 
     /** Done tasks first, then the Today order. */
     val calendarDay: Comparator<Task> = compareByDescending<Task> { it.done }.then(today)
+
+    /** Soonest date first with undated tasks last, then High to None. */
+    val project: Comparator<Task> = compareBy<Task> { it.date == null }
+        .thenBy { it.date ?: LocalDate.MIN }
+        .thenBy { it.priority.ordinal }
 }

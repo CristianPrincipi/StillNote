@@ -3,18 +3,22 @@ package app.stillnote.ui.newtask
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.AppClock
+import app.stillnote.data.Features
 import app.stillnote.data.Priority
 import app.stillnote.data.TaskDraft
 import app.stillnote.data.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
-enum class Picker { When, Priority }
+enum class Picker { When, Priority, Project }
 
 /**
  * The note being written. [minutes] is the time of day, null until the clock is first opened;
@@ -26,6 +30,9 @@ data class NewTaskDraft(
     val dayOffset: Int = 0,
     val minutes: Int? = null,
     val priority: Priority? = null,
+    /** True once a project, or "No project", has been picked; only then does its chip show. */
+    val projectPicked: Boolean = false,
+    val project: String? = null,
     val picker: Picker? = null,
 ) {
     val date: LocalDate get() = today.plusDays(dayOffset.toLong())
@@ -37,8 +44,25 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
     private val _draft = MutableStateFlow<NewTaskDraft?>(null)
     val draft: StateFlow<NewTaskDraft?> = _draft.asStateFlow()
 
+    /** The projects a task can be filed under, in card order. */
+    val projects: StateFlow<List<String>> = tasks.observeProjects()
+        .map { all -> all.map { it.name } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val features: StateFlow<Features> = tasks.features.stateIn(viewModelScope, SharingStarted.Eagerly, Features())
+
     fun open() {
-        _draft.value = NewTaskDraft(today = clock.today())
+        _draft.value = NewTaskDraft(today = clock.today.value)
+    }
+
+    /** Opens the note from the Projects page: the project picker is already open, on [project]. */
+    fun openForProject(project: String?) {
+        _draft.value = NewTaskDraft(
+            today = clock.today.value,
+            projectPicked = project != null,
+            project = project,
+            picker = Picker.Project,
+        )
     }
 
     fun dismiss() {
@@ -68,6 +92,9 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
 
     fun setPriority(priority: Priority) = edit { copy(priority = priority) }
 
+    /** [project] is null for "No project". */
+    fun setProject(project: String?) = edit { copy(projectPicked = true, project = project) }
+
     /** Creates the task and closes the note. Does nothing while the title is blank. */
     fun save() {
         val draft = _draft.value ?: return
@@ -75,7 +102,7 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
         if (title.isEmpty()) return
         _draft.value = null
         viewModelScope.launch {
-            tasks.create(TaskDraft(title, draft.date, draft.time, draft.priority ?: Priority.None))
+            tasks.create(TaskDraft(title, draft.date, draft.time, draft.priority ?: Priority.None, draft.project))
         }
     }
 

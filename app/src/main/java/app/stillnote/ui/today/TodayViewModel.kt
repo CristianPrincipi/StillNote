@@ -3,16 +3,20 @@ package app.stillnote.ui.today
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.AppClock
+import app.stillnote.data.SyncStatus
 import app.stillnote.data.Task
 import app.stillnote.data.TaskOrder
 import app.stillnote.data.TaskRepository
+import app.stillnote.ui.calm
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -22,17 +26,23 @@ data class TodayUiState(
     val open: List<Task> = emptyList(),
     val done: List<Task> = emptyList(),
     val loaded: Boolean = false,
+    val sync: SyncStatus = SyncStatus.Idle,
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(private val tasks: TaskRepository, clock: AppClock) : ViewModel() {
-    private val date = clock.today()
-
-    val state: StateFlow<TodayUiState> = tasks.observeTasks(date, date)
-        .map { all ->
-            val (done, open) = all.sortedWith(TaskOrder.today).partition { it.done }
-            TodayUiState(date, open, done, loaded = true)
+    val state: StateFlow<TodayUiState> = clock.today
+        .flatMapLatest { date ->
+            combine(tasks.observeTasks(date, date), tasks.syncStatus.calm()) { all, sync ->
+                val (done, open) = all.sortedWith(TaskOrder.today).partition { it.done }
+                TodayUiState(date, open, done, loaded = true, sync = sync)
+            }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(date))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(clock.today.value))
+
+    /** True while a change that Notion refused is waiting for a retry. */
+    val couldNotSave: StateFlow<Boolean> =
+        tasks.hasFailedChanges.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /** The task just deleted, while it can still be brought back. */
     private val _deleted = MutableStateFlow<Task?>(null)
@@ -59,6 +69,8 @@ class TodayViewModel(private val tasks: TaskRepository, clock: AppClock) : ViewM
         _deleted.value = null
         viewModelScope.launch { tasks.restore(task.id) }
     }
+
+    fun retrySaving() = tasks.retryFailedChanges()
 
     private companion object {
         const val UNDO_MILLIS = 5_000L
