@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&family=Newsreader:opsz,wght@6..72,400&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; background-color: #F3EEE4; background-image: radial-gradient(circle, #D8CEBD 1px, transparent 1.4px); background-size: 22px 22px; background-position: 11px 11px; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <header style="flex: none; display: flex; align-items: center; gap: 4px; padding: 24px 24px 4px 14px">
+    <a href="Main.dc.html" aria-label="Back to tasks" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M11 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 40px; line-height: 1.15; letter-spacing: -0.01em">Settings</h1>
+  </header>
+
+  <main style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 18px 24px 32px 24px; display: flex; flex-direction: column; gap: 32px">
+
+    <section aria-labelledby="notion-h" style="display: flex; flex-direction: column; gap: 10px">
+      <h2 id="notion-h" style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">Notion</h2>
+      <label for="notion-token" style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 19px; line-height: 1.2">Integration token</label>
+      <div style="display: flex; align-items: center; height: 50px; box-sizing: border-box; padding: 0 0 0 14px; background: #FCFAF5; border: 1.4px solid #2A2621; border-radius: 3px">
+        <input id="notion-token" type="{{tokenType}}" value="{{token}}" onChange="{{onToken}}" placeholder="ntn_…" autocomplete="off" spellcheck="false" style="flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: none; background: transparent; font-family: 'DM Mono', ui-monospace, monospace; font-size: 14px; letter-spacing: 0.04em; color: #2A2621">
+        <button type="button" onClick="{{toggleShow}}" aria-label="{{showLabel}}" aria-pressed="{{show}}" style="flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.8"></circle></svg>
+        </button>
+      </div>
+      <p style="margin: 0; font-size: 11.5px; line-height: 1.55; color: #4F463D">Create an internal integration at notion.so/my-integrations, then share your tasks database with it.</p>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px">
+          <span style="width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; background: #2A2621; color: #F3EEE4; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+          </span>
+          Connected to “Tasks”
+        </span>
+        <button type="button" style="min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: #2A2621; color: #F7E08C; font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer">Save</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="palette-h" style="display: flex; flex-direction: column; gap: 12px">
+      <h2 id="palette-h" style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">Color palette</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{palettes}}" as="p" hint-placeholder-count="4">
+          <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.selected}}" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: #2A2621; font: inherit; cursor: pointer">
+            <span style="position: relative; display: block; width: 100%; height: 74px; box-sizing: border-box; background: {{p.ground}}; border: {{p.border}}; border-radius: 4px; overflow: hidden">
+              <span style="position: absolute; left: 12px; top: 12px; width: 30px; height: 30px; background: {{p.a}}; transform: rotate(-6deg); box-shadow: 0 6px 6px -5px rgba(0, 0, 0, 0.45)"></span>
+              <span style="position: absolute; left: 32px; top: 28px; width: 30px; height: 30px; background: {{p.b}}; transform: rotate(5deg); box-shadow: 0 6px 6px -5px rgba(0, 0, 0, 0.45)"></span>
+            </span>
+            <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 17px; line-height: 1.2; padding: 0 5px; background: {{p.labelBg}}">{{p.name}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="type-h" style="display: flex; flex-direction: column; gap: 8px">
+      <h2 id="type-h" style="margin: 0 0 4px 0; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">Typography</h2>
+      <sc-for list="{{fonts}}" as="f" hint-placeholder-count="3">
+        <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.selected}}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 66px; padding: 8px 14px; box-sizing: border-box; border: 0; border-radius: 2px; background: {{f.bg}}; box-shadow: {{f.shadow}}; text-align: left; color: #2A2621; font: inherit; cursor: pointer">
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span style="font-family: {{f.family}}; font-size: 21px; line-height: 1.25">Water the plants</span>
+            <span style="font-size: 11px; letter-spacing: 0.08em; color: #4F463D">{{f.name}}</span>
+          </span>
+          <span style="flex: none; width: 22px; height: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+            <sc-if value="{{f.selected}}" hint-placeholder-val="{{ false }}">
+              <span style="display: block; width: 10px; height: 10px; background: #2A2621; border-radius: 50%"></span>
+            </sc-if>
+          </span>
+        </button>
+      </sc-for>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { token: 'ntn_4f9aXk2vQ8mNw7Lp3RtY', show: false, palette: 'canary', font: 'hand' };
+  }
+  renderVals() {
+    const PALETTES = [
+      { id: 'canary', name: 'Canary', ground: '#F3EEE4', a: '#F7E08C', b: '#F4B795' },
+      { id: 'sage', name: 'Sage', ground: '#EEF0E6', a: '#CFE3C4', b: '#F1D9A0' },
+      { id: 'blush', name: 'Blush', ground: '#F6EEEB', a: '#F4C8C1', b: '#E3D5EC' },
+      { id: 'night', name: 'Night', ground: '#26231F', a: '#F7E08C', b: '#8FB3C9' }
+    ];
+    const FONTS = [
+      { id: 'hand', name: 'Handwritten · Kalam', family: "'Kalam', 'Segoe Print', cursive" },
+      { id: 'type', name: 'Typewriter · Courier Prime', family: "'Courier Prime', 'Courier New', monospace" },
+      { id: 'book', name: 'Bookish · Newsreader', family: "'Newsreader', Georgia, serif" }
+    ];
+    const s = this.state || { token: '', show: false, palette: 'canary', font: 'hand' };
+    return {
+      token: s.token,
+      onToken: (e) => this.setState({ token: e.target.value }),
+      tokenType: s.show ? 'text' : 'password',
+      show: s.show,
+      showLabel: s.show ? 'Hide token' : 'Show token',
+      toggleShow: () => this.setState({ show: !s.show }),
+      palettes: PALETTES.map((p) => ({
+        name: p.name,
+        ground: p.ground,
+        a: p.a,
+        b: p.b,
+        selected: p.id === s.palette,
+        border: p.id === s.palette ? '2px solid #2A2621' : '1.2px solid rgba(42, 38, 33, 0.3)',
+        labelBg: p.id === s.palette ? '#F7E08C' : 'transparent',
+        pick: () => this.setState({ palette: p.id })
+      })),
+      fonts: FONTS.map((f) => ({
+        name: f.name,
+        family: f.family,
+        selected: f.id === s.font,
+        bg: f.id === s.font ? '#FCFAF5' : 'transparent',
+        shadow: f.id === s.font ? '0 1px 1px rgba(42, 38, 33, 0.07), 0 12px 14px -12px rgba(42, 38, 33, 0.55)' : 'none',
+        pick: () => this.setState({ font: f.id })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

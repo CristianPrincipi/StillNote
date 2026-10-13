@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Calendar — static preview</title>
+<!-- Static render of the default state of design/screens/source/Calendar.dc.html. Reference only: not app code. -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Kalam:wght@300;400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</head>
+<body style="margin:0; background:#d9d4cb; display:flex; justify-content:center">
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; background-color: #F3EEE4; background-image: radial-gradient(circle, #D8CEBD 1px, transparent 1.4px); background-size: 22px 22px; background-position: 11px 11px; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <header style="flex: none; display: flex; flex-direction: column; gap: 2px; padding: 30px 24px 4px 24px">
+    <p style="margin: 0; font-size: 12px; letter-spacing: 0.16em; color: #4F463D">2026</p>
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 aria-live="polite" style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 46px; line-height: 1.15; letter-spacing: -0.01em">October</h1>
+      <div style="display: flex; align-items: center; gap: 0; margin-right: -10px">
+        <button type="button" aria-label="Previous month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
+        </button>
+        <button type="button" disabled="" aria-label="Next month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; opacity: 0.3; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
+        </button>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #4F463D">16 done · 2 missed · 14 to come</p>
+  </header>
+
+  <main style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 20px 28px 20px; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-label="Month" style="display: flex; flex-direction: column; gap: 6px">
+      <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 11px; letter-spacing: 0.12em; color: #4F463D; text-align: center">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; column-gap: 2px">
+        
+          <button type="button" disabled="" aria-label="28" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #A39888; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">28</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" disabled="" aria-label="29" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #A39888; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">29</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" disabled="" aria-label="30" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #A39888; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">30</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="1 October, 2 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">1</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="2 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">2</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="3 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">3</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="4 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">4</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="5 October, 3 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">5</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="6 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">6</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="7 October, 2 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">7</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="8 October, 3 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">8</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="9 October, 2 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">9</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="10 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">10</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="11 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">11</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="12 October, 6 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: #F7E08C; box-shadow: 0 9px 10px -8px rgba(42, 38, 33, 0.6); transform: rotate(-2deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 500">12</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="13 October, 2 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">13</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="14 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">14</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="15 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">15</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="16 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">16</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="17 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">17</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="18 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">18</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="19 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">19</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="20 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">20</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="21 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">21</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="22 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">22</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="23 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">23</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="24 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">24</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="25 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">25</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="26 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">26</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="27 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">27</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="28 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">28</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="29 October, 1 task" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">29</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: transparent"></span>
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="30 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">30</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" aria-label="31 October, 0 tasks" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">31</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+          <button type="button" disabled="" aria-label="1" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: transparent; box-shadow: none; transform: rotate(0deg); color: #A39888; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid transparent; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: 400">1</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              
+            </span>
+          </button>
+        
+      </div>
+      <div style="display: flex; gap: 18px; padding: 6px 0 0 6px; font-size: 11px; color: #4F463D">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="display: block; width: 8px; height: 8px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>done</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="display: block; width: 8px; height: 8px; box-sizing: border-box; border: 1.2px solid #2A2621"></span>not done</span>
+      </div>
+    </section>
+
+    <section aria-label="Selected day" style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 4px 6px; border-bottom: 1.5px solid #2A2621">
+        <h2 style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 26px; line-height: 1.2">Monday 12</h2>
+        <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #4F463D">6 tasks</span>
+      </div>
+      
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+              <span aria-label="Done" style="flex: none; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; background: #2A2621; color: #F3EEE4; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              </span>
+            
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #6A6056; text-decoration: line-through">Water the plants</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">08:00</span>
+            <span aria-label="Low priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #CFE1EA; transform: rotate(-4deg)"></span>
+          </li>
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+              <span aria-label="Done" style="flex: none; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; background: #2A2621; color: #F3EEE4; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              </span>
+            
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #6A6056; text-decoration: line-through">Back up the laptop</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D"></span>
+            <span aria-label="No priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #FCFAF5; transform: rotate(-4deg)"></span>
+          </li>
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+            
+              <span aria-label="Not done" style="flex: none; display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #2A2621; text-decoration: none">Reply to Marco about Friday</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">10:30</span>
+            <span aria-label="High priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #F4B795; transform: rotate(-4deg)"></span>
+          </li>
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+            
+              <span aria-label="Not done" style="flex: none; display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #2A2621; text-decoration: none">Weekly review in Notion</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">13:00</span>
+            <span aria-label="Medium priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #F7E08C; transform: rotate(-4deg)"></span>
+          </li>
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+            
+              <span aria-label="Not done" style="flex: none; display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #2A2621; text-decoration: none">Pick up the parcel</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">18:00</span>
+            <span aria-label="Low priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #CFE1EA; transform: rotate(-4deg)"></span>
+          </li>
+        
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            
+            
+              <span aria-label="Not done" style="flex: none; display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+            
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: #2A2621; text-decoration: none">Read 20 pages</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">any time</span>
+            <span aria-label="No priority" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: #FCFAF5; transform: rotate(-4deg)"></span>
+          </li>
+        
+      </ul>
+    </section>
+  </main>
+
+  <nav aria-label="Main" style="flex: none; position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 6px 16px 16px 16px; background: #F3EEE4; border-top: 1px solid #D9CFBD">
+    <a href="Calendar.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #2A2621; font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="1.5"></rect><path d="M3.5 10h17"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px; background: #F7E08C; transform: rotate(-2deg)">Calendar</span>
+    </a>
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #4F463D; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v10.5L13.5 20H5z"></path><path d="M13.5 20v-5.5H19"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px">Tasks</span>
+    </a>
+    <a href="Projects.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #4F463D; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="13" height="12" rx="1"></rect><path d="M7.5 8.5V4.5h13v11.5h-4"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px">Projects</span>
+    </a>
+  </nav>
+</div>
+</body>
+</html>

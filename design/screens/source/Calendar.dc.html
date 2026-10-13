@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; background-color: #F3EEE4; background-image: radial-gradient(circle, #D8CEBD 1px, transparent 1.4px); background-size: 22px 22px; background-position: 11px 11px; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <header style="flex: none; display: flex; flex-direction: column; gap: 2px; padding: 30px 24px 4px 24px">
+    <p style="margin: 0; font-size: 12px; letter-spacing: 0.16em; color: #4F463D">{{year}}</p>
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 aria-live="polite" style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 46px; line-height: 1.15; letter-spacing: -0.01em">{{monthName}}</h1>
+      <div style="display: flex; align-items: center; gap: 0; margin-right: -10px">
+        <button type="button" onClick="{{prevMonth}}" aria-label="Previous month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
+        </button>
+        <button type="button" onClick="{{nextMonth}}" disabled="{{atCurrent}}" aria-label="Next month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; opacity: {{nextOpacity}}; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
+        </button>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #4F463D">{{summary}}</p>
+  </header>
+
+  <main style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 20px 28px 20px; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-label="Month" style="display: flex; flex-direction: column; gap: 6px">
+      <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 11px; letter-spacing: 0.12em; color: #4F463D; text-align: center">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; column-gap: 2px">
+        <sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+          <button type="button" onClick="{{c.pick}}" disabled="{{c.disabled}}" aria-label="{{c.aria}}" style="height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 5px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: {{c.bg}}; box-shadow: {{c.shadow}}; transform: rotate({{c.rot}}); color: {{c.color}}; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid {{c.ring}}; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 14px; font-weight: {{c.weight}}">{{c.num}}</span>
+            <span style="display: flex; gap: 3px; height: 7px">
+              <sc-for list="{{c.squares}}" as="q" hint-placeholder-count="2">
+                <span style="display: block; width: 7px; height: 7px; box-sizing: border-box; border: 1.2px solid #2A2621; background: {{q.bg}}"></span>
+              </sc-for>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 18px; padding: 6px 0 0 6px; font-size: 11px; color: #4F463D">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="display: block; width: 8px; height: 8px; box-sizing: border-box; border: 1.2px solid #2A2621; background: #2A2621"></span>done</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="display: block; width: 8px; height: 8px; box-sizing: border-box; border: 1.2px solid #2A2621"></span>not done</span>
+      </div>
+    </section>
+
+    <section aria-label="Selected day" style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 4px 6px; border-bottom: 1.5px solid #2A2621">
+        <h2 style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 26px; line-height: 1.2">{{selTitle}}</h2>
+        <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #4F463D">{{selCount}}</span>
+      </div>
+      <sc-if value="{{selEmpty}}" hint-placeholder-val="{{ false }}">
+        <p style="margin: 0; padding: 14px 6px; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 19px; color: #6A6056">Nothing written down.</p>
+      </sc-if>
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+        <sc-for list="{{selTasks}}" as="t" hint-placeholder-count="4">
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 6px; border-bottom: 1px dashed #CDC2AF">
+            <sc-if value="{{t.done}}" hint-placeholder-val="{{ false }}">
+              <span aria-label="Done" style="flex: none; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; background: #2A2621; color: #F3EEE4; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              </span>
+            </sc-if>
+            <sc-if value="{{t.open}}" hint-placeholder-val="{{ true }}">
+              <span aria-label="Not done" style="flex: none; display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+            </sc-if>
+            <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.2; color: {{t.titleColor}}; text-decoration: {{t.deco}}">{{t.title}}</span>
+            <span style="font-size: 11px; letter-spacing: 0.04em; color: #4F463D">{{t.meta}}</span>
+            <span aria-label="{{t.prLabel}}" style="flex: none; display: block; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #2A2621; background: {{t.swatch}}; transform: rotate(-4deg)"></span>
+          </li>
+        </sc-for>
+      </ul>
+    </section>
+  </main>
+
+  <nav aria-label="Main" style="flex: none; position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 6px 16px 16px 16px; background: #F3EEE4; border-top: 1px solid #D9CFBD">
+    <a href="Calendar.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #2A2621; font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="1.5"></rect><path d="M3.5 10h17"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px; background: #F7E08C; transform: rotate(-2deg)">Calendar</span>
+    </a>
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #4F463D; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v10.5L13.5 20H5z"></path><path d="M13.5 20v-5.5H19"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px">Tasks</span>
+    </a>
+    <a href="Projects.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #4F463D; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="13" height="12" rx="1"></rect><path d="M7.5 8.5V4.5h13v11.5h-4"></path></svg>
+      <span style="display: inline-block; padding: 1px 7px">Projects</span>
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { off: 0, sel: 12 };
+  }
+  tasksFor(y, m, d) {
+    if (y === 2026 && m === 9) {
+      const OCT = {
+        1: [['Pay the electricity bill', 'high', 1, '09:00'], ['Call grandma', 'med', 1, '19:00']],
+        2: [['Gym', 'low', 1, '18:30']],
+        3: [['Farmers market', 'none', 1, '10:00']],
+        5: [['Reply to the landlord', 'high', 1, '09:30'], ['Weekly review in Notion', 'med', 1, '13:00'], ['Fix the bike light', 'low', 1, '']],
+        6: [['Read 20 pages', 'none', 1, '']],
+        7: [['Back up the laptop', 'low', 1, ''], ['Buy coffee beans', 'none', 1, '']],
+        8: [['Prepare slides for Thursday', 'high', 1, '10:00'], ['Water the plants', 'low', 1, '08:00'], ['Read 20 pages', 'none', 0, '']],
+        9: [['Gym', 'low', 0, '18:30'], ['Dinner with Luca', 'none', 1, '20:30']],
+        10: [['Clean the desk', 'none', 1, '']],
+        12: [['Water the plants', 'low', 1, '08:00'], ['Back up the laptop', 'none', 1, ''], ['Reply to Marco about Friday', 'high', 0, '10:30'], ['Weekly review in Notion', 'med', 0, '13:00'], ['Pick up the parcel', 'low', 0, '18:00'], ['Read 20 pages', 'none', 0, '']],
+        13: [['Buy a birthday card for Giulia', 'high', 0, '18:00'], ['Gym', 'low', 0, '18:30']],
+        14: [['Book the car service', 'med', 0, '09:00']],
+        16: [['Gym', 'low', 0, '18:30']],
+        19: [['Weekly review in Notion', 'med', 0, '13:00']],
+        21: [['Car service', 'high', 0, '08:30']],
+        23: [['Gym', 'low', 0, '18:30']],
+        24: [['Giulia’s birthday', 'high', 0, '']],
+        26: [['Weekly review in Notion', 'med', 0, '13:00']],
+        29: [['Renew the train pass', 'med', 0, '']]
+      };
+      return (OCT[d] || []).map((a) => ({ title: a[0], pr: a[1], done: a[2] === 1, time: a[3] }));
+    }
+    if (y > 2026 || (y === 2026 && m > 9)) return [];
+    const POOL = [
+      ['Weekly review in Notion', 'med', '13:00'],
+      ['Read 20 pages', 'none', ''],
+      ['Gym', 'low', '18:30'],
+      ['Groceries', 'low', '19:00'],
+      ['Call grandma', 'med', '19:00'],
+      ['Back up the laptop', 'none', ''],
+      ['Reply to emails', 'high', '09:30']
+    ];
+    const seed = d + m * 3;
+    const n = [0, 1, 2, 1, 3, 0, 2][seed % 7];
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const p = POOL[(seed + k * 3) % POOL.length];
+      out.push({ title: p[0], pr: p[1], time: p[2], done: (d + k) % 6 !== 0 });
+    }
+    return out;
+  }
+  renderVals() {
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const COLORS = { high: '#F4B795', med: '#F7E08C', low: '#CFE1EA', none: '#FCFAF5' };
+    const PR = { high: 'High priority', med: 'Medium priority', low: 'Low priority', none: 'No priority' };
+    const s = this.state || { off: 0, sel: 12 };
+    const base = new Date(2026, 9 + s.off, 1);
+    const y = base.getFullYear();
+    const m = base.getMonth();
+    const first = (base.getDay() + 6) % 7;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const prevDim = new Date(y, m, 0).getDate();
+    const total = Math.ceil((first + dim) / 7) * 7;
+    const todayKey = 2026 * 10000 + 9 * 100 + 12;
+    let done = 0;
+    let missed = 0;
+    let ahead = 0;
+    const cells = [];
+    for (let i = 0; i < total; i++) {
+      const n = i - first + 1;
+      const inMonth = n >= 1 && n <= dim;
+      const num = inMonth ? n : (n < 1 ? prevDim + n : n - dim);
+      const tasks = inMonth ? this.tasksFor(y, m, n) : [];
+      const key = y * 10000 + m * 100 + n;
+      const isPast = inMonth && key < todayKey;
+      tasks.forEach((t) => { if (t.done) done++; else if (isPast) missed++; else ahead++; });
+      const isToday = inMonth && key === todayKey;
+      const selected = inMonth && s.sel === n;
+      cells.push({
+        num: String(num),
+        disabled: !inMonth,
+        aria: inMonth ? n + ' ' + MONTHS[m] + ', ' + (tasks.length === 1 ? '1 task' : tasks.length + ' tasks') : String(num),
+        color: inMonth ? '#2A2621' : '#A39888',
+        bg: selected ? '#F7E08C' : 'transparent',
+        shadow: selected ? '0 9px 10px -8px rgba(42, 38, 33, 0.6)' : 'none',
+        rot: selected ? '-2deg' : '0deg',
+        ring: isToday ? '#2A2621' : 'transparent',
+        weight: isToday ? '500' : '400',
+        squares: tasks.slice(0, 4).map((t) => ({ bg: t.done ? '#2A2621' : 'transparent' })),
+        pick: () => { if (inMonth) this.setState({ sel: n }); }
+      });
+    }
+    const sel = s.sel;
+    const selList = sel ? this.tasksFor(y, m, sel) : [];
+    const selKey = y * 10000 + m * 100 + (sel || 0);
+    const selDate = sel ? new Date(y, m, sel) : null;
+    const isCurrent = s.off === 0;
+    return {
+      year: String(y),
+      monthName: MONTHS[m],
+      summary: isCurrent
+        ? done + ' done · ' + missed + ' missed · ' + ahead + ' to come'
+        : done + ' done · ' + missed + ' missed',
+      atCurrent: isCurrent,
+      nextOpacity: isCurrent ? '0.3' : '1',
+      prevMonth: () => this.setState({ off: s.off - 1, sel: null }),
+      nextMonth: () => { if (s.off < 0) this.setState({ off: s.off + 1, sel: s.off + 1 === 0 ? 12 : null }); },
+      cells,
+      selTitle: selDate ? DAYS[selDate.getDay()] + ' ' + sel : 'Pick a day',
+      selCount: sel ? (selList.length === 1 ? '1 task' : selList.length + ' tasks') : '',
+      selEmpty: !!sel && selList.length === 0,
+      selTasks: selList.map((t) => ({
+        title: t.title,
+        done: t.done,
+        open: !t.done,
+        meta: t.done ? (t.time || '') : (selKey < todayKey ? 'missed' : (t.time || 'any time')),
+        swatch: COLORS[t.pr],
+        prLabel: PR[t.pr],
+        titleColor: t.done ? '#6A6056' : '#2A2621',
+        deco: t.done ? 'line-through' : 'none'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

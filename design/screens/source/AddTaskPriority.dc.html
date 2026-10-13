@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New task: priority</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EEE4; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; filter: blur(1.5px)">
+    <dc-import name="Main" hint-size="390px,844px"></dc-import>
+  </div>
+
+  <a href="Main.dc.html" aria-label="Close without saving" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; background: rgba(42, 38, 33, 0.42)"></a>
+
+  <div role="dialog" aria-label="New task" style="position: absolute; left: 24px; top: 164px; width: 342px; box-sizing: border-box; padding: 28px 18px 14px 22px; display: flex; flex-direction: column; gap: 8px; background: {{noteBg}}; border-radius: 2px 2px 3px 26px / 2px 2px 3px 9px; transform: rotate(-1.2deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75); transition: background-color 260ms ease">
+    <span aria-hidden="true" style="position: absolute; top: -14px; left: 114px; width: 112px; height: 28px; background: rgba(252, 250, 245, 0.58); border-left: 1px dashed rgba(42, 38, 33, 0.14); border-right: 1px dashed rgba(42, 38, 33, 0.14); transform: rotate(-3deg)"></span>
+
+    <label for="task-name-priority" style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">New task</label>
+    <textarea id="task-name-priority" rows="2" placeholder="What needs doing?" value="{{text}}" onChange="{{onText}}" style="width: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: none; resize: none; background: transparent; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 27px; line-height: 1.3; color: #2A2621"></textarea>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border: 1.2px solid #2A2621; border-radius: 999px; background: rgba(252, 250, 245, 0.45); font-size: 12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"></circle><path d="M12 7.2V12l3.2 2"></path></svg>
+        Tomorrow, 18:00
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border: 1.2px solid #2A2621; border-radius: 999px; background: rgba(252, 250, 245, 0.45); font-size: 12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 21V3.8"></path><path d="M5.5 4h12l-2.6 4.4 2.6 4.4h-12"></path></svg>
+        {{chip}}
+      </span>
+    </div>
+
+    <div style="margin: 6px -18px 0 -22px; border-top: 1.5px dashed rgba(42, 38, 33, 0.38)"></div>
+
+    <section aria-label="Priority" style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+      <h2 style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">Priority</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{options}}" as="o" hint-placeholder-count="4">
+          <button type="button" onClick="{{o.pick}}" aria-pressed="{{o.selected}}" aria-label="{{o.label}} priority" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0 2px 0; border: 0; background: transparent; color: #2A2621; font: inherit; cursor: pointer">
+            <span style="width: 54px; height: 54px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: {{o.color}}; border: {{o.border}}; border-radius: 2px 2px 2px 12px / 2px 2px 2px 5px; transform: rotate({{o.rot}}); box-shadow: 0 9px 10px -8px rgba(42, 38, 33, 0.6)">
+              <sc-if value="{{o.selected}}" hint-placeholder-val="{{ false }}">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A2621" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              </sc-if>
+            </span>
+            <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 17px; line-height: 1.2">{{o.label}}</span>
+            <span style="font-size: 10.5px; letter-spacing: 0.08em; color: #4F463D; min-height: 14px">{{o.marks}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px">
+      <div style="display: flex; align-items: center; gap: 2px; margin-left: -10px">
+        <a href="AddTaskWhen.dc.html" aria-label="Set date and time" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"></circle><path d="M12 7.2V12l3.2 2"></path></svg>
+        </a>
+        <a href="AddTask.dc.html" aria-label="Hide priority" aria-expanded="true" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #2A2621; border-radius: 10px; background: rgba(42, 38, 33, 0.12)">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 21V3.8"></path><path d="M5.5 4h12l-2.6 4.4 2.6 4.4h-12"></path></svg>
+        </a>
+      </div>
+      <a href="Main.dc.html" aria-label="Save task" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #2A2621; color: {{noteBg}}">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+      </a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { text: 'Buy a birthday card for Giulia', pr: 'high' };
+  }
+  renderVals() {
+    const LEVELS = [
+      { id: 'high', label: 'High', color: '#F4B795', marks: '!!!', rot: '-3deg' },
+      { id: 'med', label: 'Medium', color: '#F7E08C', marks: '!!', rot: '2deg' },
+      { id: 'low', label: 'Low', color: '#CFE1EA', marks: '!', rot: '-1.5deg' },
+      { id: 'none', label: 'None', color: '#FCFAF5', marks: '', rot: '2.5deg' }
+    ];
+    const s = this.state || { text: '', pr: 'high' };
+    const current = LEVELS.find((l) => l.id === s.pr) || LEVELS[0];
+    return {
+      text: s.text,
+      onText: (e) => this.setState({ text: e.target.value }),
+      noteBg: current.color,
+      chip: current.id === 'none' ? 'No priority' : current.marks + ' ' + current.label,
+      options: LEVELS.map((l) => ({
+        label: l.label,
+        marks: l.marks,
+        color: l.color,
+        rot: l.id === s.pr ? l.rot : '0deg',
+        selected: l.id === s.pr,
+        border: l.id === s.pr ? '2px solid #2A2621' : '1.2px solid rgba(42, 38, 33, 0.4)',
+        pick: () => this.setState({ pr: l.id })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

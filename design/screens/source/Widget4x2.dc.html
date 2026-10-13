@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget 4×2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 460px; height: 300px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #3D4744; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <section aria-label="Today's tasks" style="position: relative; width: 356px; height: 184px; box-sizing: border-box; padding: 14px 10px 10px 16px; display: flex; flex-direction: column; gap: 4px; background: #F7E08C; border-radius: 2px 2px 3px 20px / 2px 2px 3px 7px; transform: rotate(-0.8deg); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12), 0 18px 20px -12px rgba(0, 0, 0, 0.65)">
+    <span aria-hidden="true" style="position: absolute; top: -8px; left: 150px; width: 64px; height: 16px; background: rgba(252, 250, 245, 0.6); transform: rotate(-3deg)"></span>
+
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Main.dc.html" style="display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: #2A2621">
+        <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 24px; line-height: 1.1">Today</span>
+        <span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #4F463D">Mon 12 Oct · {{count}} to do</span>
+      </a>
+      <a href="AddTask.dc.html" aria-label="Add a task" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #2A2621">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+      </a>
+    </div>
+
+    <sc-if value="{{allClear}}" hint-placeholder-val="{{ false }}">
+      <p style="margin: 22px 0 0 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 21px; line-height: 1.2">All clear for today.</p>
+    </sc-if>
+
+    <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+      <sc-for list="{{shown}}" as="t" hint-placeholder-count="4">
+        <li style="display: flex; align-items: center; gap: 4px; height: 31px; border-bottom: 1px dashed rgba(42, 38, 33, 0.18)">
+          <button type="button" onClick="{{t.complete}}" aria-label="Mark {{t.title}} as done" style="flex: none; width: 30px; height: 31px; display: flex; align-items: center; justify-content: flex-start; padding: 0; border: 0; background: transparent; cursor: pointer">
+            <span style="display: block; width: 17px; height: 17px; box-sizing: border-box; border: 1.6px solid {{t.ink}}; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+          </button>
+          <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 17px; line-height: 1.2; color: {{t.ink}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+          <span style="flex: none; font-size: 11px; letter-spacing: 0.03em; color: #4F463D">{{t.time}}</span>
+          <span style="flex: none; width: 26px; text-align: right; font-size: 11px; font-weight: 500; color: {{t.ink}}">{{t.marks}}</span>
+        </li>
+      </sc-for>
+    </ul>
+
+    <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}">
+      <a href="Main.dc.html" style="margin-top: auto; padding-left: 30px; font-size: 10.5px; letter-spacing: 0.08em; color: #4F463D; text-decoration: none">{{more}}</a>
+    </sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tasks: [
+        { id: 3, title: 'Pick up the parcel', time: '18:00', pr: 'low' },
+        { id: 2, title: 'Weekly review in Notion', time: '13:00', pr: 'med' },
+        { id: 4, title: 'Read 20 pages', time: '', pr: 'none' },
+        { id: 1, title: 'Reply to Marco about Friday', time: '10:30', pr: 'high' }
+      ]
+    };
+  }
+  renderVals() {
+    const ORDER = { high: 0, med: 1, low: 2, none: 3 };
+    const INK = { high: '#A63D22', med: '#7A5A00', low: '#2C5F80', none: '#2A2621' };
+    const MARKS = { high: '!!!', med: '!!', low: '!', none: '' };
+    const MAX = 4;
+    const tasks = ((this.state && this.state.tasks) || []).slice().sort((a, b) => ORDER[a.pr] - ORDER[b.pr]);
+    const rest = tasks.length - MAX;
+    return {
+      count: String(tasks.length),
+      allClear: tasks.length === 0,
+      shown: tasks.slice(0, MAX).map((t) => ({
+        title: t.title,
+        time: t.time,
+        marks: MARKS[t.pr],
+        ink: INK[t.pr],
+        complete: () => this.setState({ tasks: this.state.tasks.filter((x) => x.id !== t.id) })
+      })),
+      hasMore: rest > 0,
+      more: '+' + rest + ' more'
+    };
+  }
+}
+</script>
+</body>
+</html>
