@@ -1,8 +1,10 @@
 package app.stillnote.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +26,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -35,8 +38,25 @@ enum class Tab(val label: String, val icon: IconPaths) {
     Projects("Projects", StillIcons.Projects),
 }
 
+/** [onDismissDim], when set, lays a light scrim over the bar; a tap on it calls back instead of switching tab. */
 @Composable
-fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
+fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier, onDismissDim: (() -> Unit)? = null) {
+    Box(modifier) {
+        NavBar(current, onSelect)
+        if (onDismissDim != null) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(StillColors.scrimLight)
+                    .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onDismissDim)
+                    .clearAndSetSemantics {},
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavBar(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()

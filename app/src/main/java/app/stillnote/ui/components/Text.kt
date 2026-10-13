@@ -107,12 +107,19 @@ fun Overline(text: String, modifier: Modifier = Modifier, size: Float = 11f, wei
 
 /**
  * A 46 sp screen title. With [highlighted], it sits on a canary highlighter band covering
- * 58–90% of the font's own height, reaching 6 dp past the text on each side.
+ * 58–90% of the font's own height, reaching 6 dp past the text on each side. The setup titles
+ * are the only ones the mockups don't tighten, so they pass a [letterSpacing] of zero.
  */
 @Composable
-fun ScreenTitle(text: String, modifier: Modifier = Modifier, size: Float = 46f, highlighted: Boolean = false) {
+fun ScreenTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    size: Float = 46f,
+    highlighted: Boolean = false,
+    letterSpacing: TextUnit = (-0.01).em,
+) {
     val style = handStyle(LocalHandFont.current, size, FontWeight.Bold, lineHeight = 1.15f)
-        .copy(letterSpacing = (-0.01).em)
+        .copy(letterSpacing = letterSpacing)
     val measurer = rememberTextMeasurer()
     val band = if (!highlighted) Modifier else Modifier.drawWithCache {
         val fontHeight = measurer.measure("x", style.copy(lineHeight = TextUnit.Unspecified)).size.height

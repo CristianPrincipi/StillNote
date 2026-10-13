@@ -41,28 +41,57 @@ TASKS_PROPERTIES = {
 }
 
 
+def prop(name, kind, pid, extra=None):
+    return {"id": pid, "name": name, "type": kind, kind: extra or {}}
+
+
 class FakeNotion:
-    def __init__(self):
+    def __init__(self, mockup=False):
+        """With `mockup`, the databases are the five that setup step 2 shows in the design."""
         self.lock = threading.Lock()
-        self.sources = {
-            "ds-tasks": {"title": "Tasks", "properties": TASKS_PROPERTIES},
-            "ds-expenses": {
-                "title": "Expenses",
-                "properties": {
-                    "Name": {"id": "title", "name": "Name", "type": "title", "title": {}},
-                    "Amount": {"id": "amt", "name": "Amount", "type": "number", "number": {}},
-                    "Date": {"id": "when", "name": "Date", "type": "date", "date": {}},
-                },
-            },
-            "ds-books": {
-                "title": "Books",
-                "properties": {
-                    "Name": {"id": "title", "name": "Name", "type": "title", "title": {}},
-                    "Read": {"id": "read", "name": "Read", "type": "checkbox", "checkbox": {}},
-                    "Finished": {"id": "fin", "name": "Finished", "type": "date", "date": {}},
-                },
-            },
-        }
+        self.parents = {"page-home": "Home", "page-books": "Books", "page-work": "Work"}
+        title = prop("Name", "title", "title")
+        if mockup:
+            tasks = {
+                "Name": title,
+                "Done": prop("Done", "checkbox", "f%5Cq%3A"),
+                "Due": prop("Due", "date", "Qv%7Bz"),
+                "Priority": prop("Priority", "select", "W%5BNU", select("High", "Medium", "Low")),
+                "Project": prop("Project", "select", "%7CbqX", select("Work", "Personal", "Errands", "Reading")),
+            }
+            self.sources = {
+                "ds-tasks": {"title": "Tasks", "parent": "page-home", "properties": tasks},
+                "ds-projects": {"title": "Projects", "parent": "page-home", "properties": {"Name": title}},
+                "ds-reading": {"title": "Reading list", "parent": "page-books", "properties": {
+                    "Title": prop("Title", "title", "title"),
+                    "Read": prop("Read", "checkbox", "read"),
+                    "Finished": prop("Finished", "date", "fin"),
+                }},
+                "ds-habits": {"title": "Habits", "parent": "page-home", "properties": {
+                    "Habit": prop("Habit", "title", "title"),
+                    "Done today": prop("Done today", "checkbox", "dt"),
+                    "Date": prop("Date", "date", "when"),
+                }},
+                "ds-meetings": {"title": "Meeting notes", "parent": "page-work", "properties": {
+                    "Name": title,
+                    "Date": prop("Date", "date", "when"),
+                    "Project": prop("Project", "select", "prj", select("Work")),
+                }},
+            }
+        else:
+            self.sources = {
+                "ds-tasks": {"title": "Tasks", "parent": "page-home", "properties": TASKS_PROPERTIES},
+                "ds-expenses": {"title": "Expenses", "parent": "page-home", "properties": {
+                    "Name": title,
+                    "Amount": prop("Amount", "number", "amt"),
+                    "Date": prop("Date", "date", "when"),
+                }},
+                "ds-books": {"title": "Books", "parent": None, "properties": {
+                    "Name": title,
+                    "Read": prop("Read", "checkbox", "read"),
+                    "Finished": prop("Finished", "date", "fin"),
+                }},
+            }
         self.pages = {}
         self.requests = []  # (method, path, status), oldest first
         self.queried = []  # the (on_or_after, on_or_before) of every query, oldest first
@@ -71,8 +100,11 @@ class FakeNotion:
         self.fail_status = 500
 
     def add_task(self, title, day, time=None, priority=None, project="Task", done=False, source="ds-tasks"):
-        """Adds a page as if it had been made in Notion. `time` is "HH:MM" in UTC+02:00."""
-        start = day.isoformat() if time is None else f"{day.isoformat()}T{time}:00.000+02:00"
+        """Adds a page as if it had been made in Notion. `day` may be None; `time` is "HH:MM" in UTC+02:00."""
+        if day is None:
+            start = None
+        else:
+            start = day.isoformat() if time is None else f"{day.isoformat()}T{time}:00.000+02:00"
         page_id = str(uuid.uuid4())
         self.pages[page_id] = {
             "object": "page",
@@ -84,7 +116,7 @@ class FakeNotion:
             "properties": {
                 "Name": {"id": "title", "type": "title", "title": text(title)},
                 " ": {"id": "f%5Cq%3A", "type": "checkbox", "checkbox": done},
-                "Date": {"id": "Qv%7Bz", "type": "date", "date": {"start": start, "end": None, "time_zone": None}},
+                "Date": {"id": "Qv%7Bz", "type": "date", "date": {"start": start, "end": None, "time_zone": None} if start else None},
                 "Priority": {"id": "W%5BNU", "type": "select", "select": {"name": priority} if priority else None},
                 "Project": {"id": "%7CbqX", "type": "select", "select": {"name": project} if project else None},
             },
@@ -96,6 +128,8 @@ class FakeNotion:
         out = []
         for page in self.pages.values():
             p = page["properties"]
+            if " " not in p:  # pages written through the mockup's schema use other names
+                p = dict(p, **{" ": p.get("Done", {"checkbox": False}), "Date": p.get("Due", p.get("Date", {"date": None}))})
             out.append({
                 "id": page["id"],
                 "title": "".join(part["plain_text"] for part in p["Name"]["title"]),
@@ -127,6 +161,12 @@ class FakeNotion:
         if (method, path) == ("POST", "/v1/search"):
             results = [self.source(source_id) for source_id in self.sources]
             return 200, listing(results, body), {}
+        match = re.fullmatch(r"/v1/pages/(page-[^/]+)", path)
+        if match and method == "GET":
+            name = self.parents.get(match.group(1))
+            if name is None:
+                return error(404, "object_not_found", "Could not find page.")
+            return 200, {"object": "page", "id": match.group(1), "properties": {"title": {"id": "title", "type": "title", "title": text(name)}}}, {}
         match = re.fullmatch(r"/v1/data_sources/([^/]+)(/query)?", path)
         if match and match.group(1) not in self.sources:
             return error(404, "object_not_found", "Could not find data source.")
@@ -149,6 +189,7 @@ class FakeNotion:
             "title": text(source["title"]),
             "in_trash": False,
             "parent": {"type": "database_id", "database_id": "db-" + source_id},
+            "database_parent": {"type": "page_id", "page_id": source["parent"]} if source.get("parent") else {"type": "workspace", "workspace": True},
             "properties": source["properties"],
         }
 
@@ -161,11 +202,20 @@ class FakeNotion:
         def matches(page):
             for condition in conditions:
                 name = names.get(condition["property"], condition["property"])
-                value = (page["properties"].get(name, {}).get("date") or {}).get("start")
-                if value is None:
+                value = page["properties"].get(name, {})
+                if "select" in condition:
+                    chosen = (value.get("select") or {}).get("name")
+                    test = condition["select"]
+                    if test.get("is_not_empty") and chosen is None:
+                        return False
+                    if "does_not_equal" in test and chosen == test["does_not_equal"]:
+                        return False
+                    continue
+                start = (value.get("date") or {}).get("start")
+                if start is None:
                     return False
                 # Notion compares in UTC.
-                day = value[:10] if "T" not in value else datetime.fromisoformat(value).astimezone(timezone.utc).date().isoformat()
+                day = start[:10] if "T" not in start else datetime.fromisoformat(start).astimezone(timezone.utc).date().isoformat()
                 if "on_or_after" in condition["date"] and day < condition["date"]["on_or_after"]:
                     return False
                 if "on_or_before" in condition["date"] and day > condition["date"]["on_or_before"]:

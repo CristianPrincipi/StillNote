@@ -88,6 +88,15 @@ object StillIcons {
     val Projects = IconPaths("projects", roundRect(3.5f, 8.5f, 13f, 12f, 1f), "M7.5 8.5V4.5h13v11.5h-4")
     val ChevronLeft = IconPaths("chevron left", "M15 5.5L8.5 12l6.5 6.5")
     val ChevronRight = IconPaths("chevron right", "M9 5.5l6.5 6.5L9 18.5")
+    val ChevronDown = IconPaths("chevron down", "M6 9l6 6 6-6")
     val Back = IconPaths("back", "M19 12H5", "M11 6l-6 6 6 6")
+    val Refresh = IconPaths(
+        "refresh",
+        "M20 11a8 8 0 0 0-14.5-4.5L4 8",
+        "M4 4v4h4",
+        "M4 13a8 8 0 0 0 14.5 4.5L20 16",
+        "M20 20v-4h-4",
+    )
+    val ExternalLink = IconPaths("external link", "M7 17L17 7", "M8 7h9v9")
     val Eye = IconPaths("show token", "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", circle(12f, 12f, 2.8f))
 }

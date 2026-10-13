@@ -12,7 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 
 class NotionClientTest {
     private val server = MockWebServer()
@@ -70,7 +69,7 @@ class NotionClientTest {
         respond(
             200,
             """{"object": "list", "has_more": true, "next_cursor": "abc", "results": [
-                {"object": "data_source", "id": "ds-1", "in_trash": false, "title": [{"plain_text": "Tasks"}]},
+                {"object": "data_source", "id": "ds-1", "in_trash": false, "title": [{"plain_text": "Tasks"}], "database_parent": {"type": "workspace", "workspace": true}},
                 {"object": "data_source", "id": "ds-2", "in_trash": true, "title": [{"plain_text": "Old"}]}
             ]}""",
         )
@@ -83,6 +82,29 @@ class NotionClientTest {
         assertEquals("/v1/search", first.url.encodedPath)
         assertEquals(Json.parseToJsonElement("""{"filter": {"property": "object", "value": "data_source"}, "page_size": 100}"""), first.json())
         assertEquals("abc", server.takeRequest().json().string("start_cursor"))
+    }
+
+    @Test
+    fun `names the page each database sits in, asking once per page and shrugging off one it can't read`() = runTest {
+        respond(
+            200,
+            """{"object": "list", "has_more": false, "results": [
+                {"object": "data_source", "id": "ds-1", "title": [{"plain_text": "Tasks"}], "database_parent": {"type": "page_id", "page_id": "home"}},
+                {"object": "data_source", "id": "ds-2", "title": [{"plain_text": "Habits"}], "database_parent": {"type": "page_id", "page_id": "home"}},
+                {"object": "data_source", "id": "ds-3", "title": [{"plain_text": "Notes"}], "database_parent": {"type": "page_id", "page_id": "private"}}
+            ]}""",
+        )
+        respond(200, """{"object": "page", "id": "home", "properties": {"title": {"id": "title", "type": "title", "title": [{"plain_text": "Home"}]}}}""")
+        respond(404, """{"code": "object_not_found", "message": "no"}""")
+
+        assertEquals(
+            listOf(DataSource("ds-1", "Tasks", "Home"), DataSource("ds-2", "Habits", "Home"), DataSource("ds-3", "Notes", null)),
+            client.dataSources("t"),
+        )
+        server.takeRequest()
+        assertEquals("/v1/pages/home", server.takeRequest().url.encodedPath)
+        assertEquals("/v1/pages/private", server.takeRequest().url.encodedPath)
+        assertEquals(3, server.requestCount)
     }
 
     @Test
@@ -110,7 +132,7 @@ class NotionClientTest {
     }
 
     @Test
-    fun `queries a date range and keys each page's values by property id`() = runTest {
+    fun `queries with a filter and keys each page's values by property id`() = runTest {
         respond(
             200,
             """{"object": "list", "has_more": false, "next_cursor": null, "results": [
@@ -119,17 +141,13 @@ class NotionClientTest {
                 {"object": "page", "id": "p-2", "created_time": "2026-10-13T08:00:00.000Z", "in_trash": true, "properties": {}}
             ]}""",
         )
-        val pages = client.query("t", "ds-1", "dt", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
+        val filter = Json.parseToJsonElement("""{"property": "dt", "date": {"on_or_after": "2026-10-01"}}""") as JsonObject
+        val pages = client.query("t", "ds-1", filter)
 
         val request = server.takeRequest()
         assertEquals("/v1/data_sources/ds-1/query", request.url.encodedPath)
         assertEquals(
-            Json.parseToJsonElement(
-                """{"filter": {"and": [
-                    {"property": "dt", "date": {"on_or_after": "2026-10-01"}},
-                    {"property": "dt", "date": {"on_or_before": "2026-10-31"}}
-                ]}, "page_size": 100}"""
-            ),
+            Json.parseToJsonElement("""{"filter": {"property": "dt", "date": {"on_or_after": "2026-10-01"}}, "page_size": 100}"""),
             request.json(),
         )
         assertEquals(listOf("p-1"), pages.map { it.id })

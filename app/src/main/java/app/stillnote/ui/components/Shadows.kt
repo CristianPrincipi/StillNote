@@ -53,6 +53,32 @@ object Shadows {
         PaperShadow(StillColors.ink, dx = 4.dp, dy = 4.dp),
         PaperShadow(StillColors.ink.copy(alpha = 0.55f), dy = 18.dp, blur = 20.dp, spread = (-12).dp),
     )
+    val indexCard = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.07f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(StillColors.ink.copy(alpha = 0.55f), dy = 14.dp, blur = 16.dp, spread = (-12).dp),
+    )
+
+    /** The small post-its on a project card. */
+    val cardPostIt = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.08f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(StillColors.ink.copy(alpha = 0.55f), dy = 8.dp, blur = 9.dp, spread = (-8).dp),
+    )
+    val menuSlip = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.08f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(Color(0xFF14100C).copy(alpha = 0.7f), dy = 14.dp, blur = 16.dp, spread = (-12).dp),
+    )
+    val pileSheet = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.07f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(StillColors.ink.copy(alpha = 0.55f), dy = 18.dp, blur = 20.dp, spread = (-14).dp),
+    )
+    val pileFront = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.10f), dy = 2.dp, blur = 2.dp),
+        PaperShadow(StillColors.ink.copy(alpha = 0.7f), dy = 30.dp, blur = 34.dp, spread = (-22).dp),
+    )
+    val previewPostIt = listOf(
+        PaperShadow(Color.Black.copy(alpha = 0.08f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(Color.Black.copy(alpha = 0.6f), dy = 12.dp, blur = 14.dp, spread = (-12).dp),
+    )
     val swatch = listOf(
         PaperShadow(Color.Black.copy(alpha = 0.45f), dy = 6.dp, blur = 6.dp, spread = (-5).dp),
     )

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.Priority
 import app.stillnote.ui.components.HandText
 import app.stillnote.ui.components.IconPaths
@@ -72,6 +74,7 @@ import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
+import app.stillnote.ui.components.Tape
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
 import app.stillnote.ui.components.rememberLineBoxTrim
@@ -92,8 +95,9 @@ import kotlin.math.min
 fun NoteSheetOverlay(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier: Modifier = Modifier) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    // The steppers and the keyboard don't fit together, so a picker takes the keyboard's place.
+    // The pickers and the keyboard don't fit together, so a picker takes the keyboard's place:
+    // the note starts on the keyboard unless it was opened with a picker already showing.
+    LaunchedEffect(Unit) { if (draft.picker == null) focus.requestFocus() }
     LaunchedEffect(draft.picker) { if (draft.picker != null) keyboard?.hide() }
 
     Box(modifier.fillMaxSize()) {
@@ -115,6 +119,7 @@ private fun Picker?.noteTop(): Dp = when (this) {
     null -> 176.dp
     Picker.When -> 138.dp
     Picker.Priority -> 164.dp
+    Picker.Project -> 150.dp
 }
 
 private val NoteMargin = 24.dp
@@ -178,6 +183,10 @@ private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: F
                         TearLine(Modifier.padding(top = 14.dp))
                         PriorityPicker(draft.priority, viewModel::setPriority, Modifier.padding(top = 12.dp))
                     }
+                    Picker.Project -> {
+                        TearLine(Modifier.padding(top = 14.dp))
+                        ProjectPicker(draft, viewModel, Modifier.padding(top = 12.dp))
+                    }
                     null -> Unit
                 }
             }
@@ -194,24 +203,6 @@ private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: F
                 .offset(y = (-14).dp),
         )
     }
-}
-
-@Composable
-private fun Tape(modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .size(114.dp, 28.dp)
-            .rotate(-3f)
-            .background(StillColors.tape)
-            .drawBehind {
-                val stroke = 1.dp.toPx()
-                val edge = StillColors.ink.copy(alpha = 0.14f)
-                val dashes = PathEffect.dashPathEffect(floatArrayOf(stroke * 3, stroke * 2))
-                for (x in listOf(stroke / 2, size.width - stroke / 2)) {
-                    drawLine(edge, Offset(x, 0f), Offset(x, size.height), stroke, pathEffect = dashes)
-                }
-            },
-    )
 }
 
 @Composable
@@ -243,7 +234,7 @@ private fun TitleField(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: 
 private fun Chips(draft: NewTaskDraft, modifier: Modifier = Modifier) {
     val time = draft.time
     val priority = draft.priority
-    if (time == null && priority == null) return
+    if (time == null && priority == null && !draft.projectPicked) return
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -253,6 +244,7 @@ private fun Chips(draft: NewTaskDraft, modifier: Modifier = Modifier) {
         if (priority != null) {
             Chip(StillIcons.Flag, if (priority == Priority.None) "No priority" else "${priority.marks} ${priority.label}")
         }
+        if (draft.projectPicked) Chip(StillIcons.Projects, draft.project ?: "No project")
     }
 }
 
@@ -423,6 +415,55 @@ private fun PriorityOption(priority: Priority, selected: Boolean, onPick: () -> 
     }
 }
 
+/** A wrapping row of pills: every project, then "No project". */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProjectPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier: Modifier = Modifier) {
+    val projects by viewModel.projects.collectAsStateWithLifecycle()
+    Column(
+        modifier = modifier.padding(start = 22.dp, end = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Overline("Project")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            projects.forEach { name ->
+                ProjectPill(name, selected = draft.projectPicked && draft.project == name) { viewModel.setProject(name) }
+            }
+            ProjectPill("No project", selected = draft.projectPicked && draft.project == null) { viewModel.setProject(null) }
+        }
+    }
+}
+
+@Composable
+private fun ProjectPill(name: String, selected: Boolean, onPick: () -> Unit) {
+    // The pill is 44 tall, as in the mockup; its 48 dp touch target overflows the row.
+    Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .requiredHeight(TapSize)
+                .selectable(
+                    selected = selected,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.RadioButton,
+                    onClick = onPick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .height(44.dp)
+                    .background(if (selected) StillColors.ink else StillColors.card.copy(alpha = 0.45f), CircleShape)
+                    .border(1.4.dp, StillColors.ink, CircleShape)
+                    .padding(horizontal = 17.4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                HandText(name, 18f, color = if (selected) StillColors.canary else StillColors.ink, lineHeight = 1f, maxLines = 1)
+            }
+        }
+    }
+}
+
 private val Priority.pickedTilt: Float
     get() = when (this) {
         Priority.High -> -3f
@@ -441,6 +482,7 @@ private fun NoteActions(draft: NewTaskDraft, noteColor: Color, viewModel: NewTas
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val features by viewModel.features.collectAsStateWithLifecycle()
         Row(horizontalArrangement = Arrangement.spacedBy((-2).dp)) {
             PickerToggle(
                 icon = StillIcons.Clock,
@@ -448,11 +490,18 @@ private fun NoteActions(draft: NewTaskDraft, noteColor: Color, viewModel: NewTas
                 label = if (draft.picker == Picker.When) "Hide date and time" else "Set date and time",
                 onClick = { viewModel.toggle(Picker.When) },
             )
-            PickerToggle(
+            // A database with no priority or project property has nowhere to keep them.
+            if (features.priority) PickerToggle(
                 icon = StillIcons.Flag,
                 active = draft.picker == Picker.Priority,
                 label = if (draft.picker == Picker.Priority) "Hide priority" else "Set priority",
                 onClick = { viewModel.toggle(Picker.Priority) },
+            )
+            if (features.projects) PickerToggle(
+                icon = StillIcons.Projects,
+                active = draft.picker == Picker.Project,
+                label = if (draft.picker == Picker.Project) "Hide project" else "Set project",
+                onClick = { viewModel.toggle(Picker.Project) },
             )
         }
         TapTarget(

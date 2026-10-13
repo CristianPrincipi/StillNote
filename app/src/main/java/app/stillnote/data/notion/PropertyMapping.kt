@@ -32,17 +32,17 @@ data class PropertyMapping(
     /** The Project option that means "no project", if the database has one. */
     val noProjectOption: String? = null,
 ) {
-    /** The task on [page], in the phone's time zone, or null when the page has no date. */
-    fun toRow(page: RemotePage, zone: ZoneId): TaskRow? {
-        val start = page.properties[date]?.obj("date")?.let { parseStart(it, zone) } ?: return null
+    /** The task on [page], with its date and time in the phone's time zone. */
+    fun toRow(page: RemotePage, zone: ZoneId): TaskRow {
+        val start = page.properties[date]?.obj("date")?.let { parseStart(it, zone) }
         val priorityName = priority?.let { page.properties[it]?.obj("select")?.string("name") }
         val projectName = project?.let { page.properties[it]?.obj("select")?.string("name") }
         return TaskRow(
             id = UUID.randomUUID().toString(),
             pageId = page.id,
             title = page.properties[title]?.plainText("title") ?: "Untitled",
-            date = start.toLocalDate().toString(),
-            minutes = start.toLocalTime().takeIf { start.hasTime }?.let { it.hour * 60 + it.minute },
+            date = start?.toLocalDate()?.toString(),
+            minutes = start?.takeIf { it.hasTime }?.toLocalTime()?.let { it.hour * 60 + it.minute },
             priority = (priorityOptions.entries.firstOrNull { it.value == priorityName }?.key ?: Priority.None).name,
             project = projectName?.takeIf { it != noProjectOption },
             done = page.properties[done]?.boolean("checkbox") == true,
@@ -57,7 +57,7 @@ data class PropertyMapping(
                 add(buildJsonObject { putJsonObject("text") { put("content", row.title.take(MAX_TEXT)) } })
             }
         }
-        putJsonObject(date) { putJsonObject("date") { put("start", row.startText(zone)) } }
+        row.startText(zone)?.let { start -> putJsonObject(date) { putJsonObject("date") { put("start", start) } } }
         putJsonObject(done) { put("checkbox", row.done) }
         if (priority != null) {
             val option = priorityOptions[Priority.valueOf(row.priority)]
@@ -65,10 +65,32 @@ data class PropertyMapping(
                 if (option == null) put("select", JsonNull) else putJsonObject("select") { put("name", option) }
             }
         }
-        if (project != null && noProjectOption != null) {
-            putJsonObject(project) { putJsonObject("select") { put("name", noProjectOption) } }
+        // A project made on the phone becomes an option in Notion the first time it is written.
+        val projectName = row.project ?: noProjectOption
+        if (project != null && projectName != null) {
+            putJsonObject(project) { putJsonObject("select") { put("name", projectName) } }
         }
     }
+
+    /** Pages dated [from]..[to], both inclusive. Notion compares these in UTC. */
+    fun dateFilter(from: LocalDate, to: LocalDate): JsonObject = allOf(
+        condition(date, "date", "on_or_after", from.toString()),
+        condition(date, "date", "on_or_before", to.toString()),
+    )
+
+    /** Pages that belong to a real project, or null when the database has no project property. */
+    fun projectFilter(): JsonObject? {
+        val property = project ?: return null
+        val real = buildJsonObject {
+            put("property", property)
+            putJsonObject("select") { put("is_not_empty", true) }
+        }
+        return allOf(*listOfNotNull(real, noProjectOption?.let { condition(property, "select", "does_not_equal", it) }).toTypedArray())
+    }
+
+    /** The project names the database offers, in its own order. */
+    fun projects(schema: Schema): List<String> =
+        schema.properties.firstOrNull { it.id == project }?.options.orEmpty().filter { it != noProjectOption }
 
     /** The only property the app changes on an existing page. */
     fun doneProperty(done: Boolean): JsonObject = buildJsonObject {
@@ -104,48 +126,83 @@ data class PropertyMapping(
         }.getOrNull()
 
         /**
-         * Finds each role in [schema] by type first and name second, or reports which
-         * required roles ("a date", "a checkbox") the database has no property for.
+         * The property the app would pick for each field: first by name among properties of a
+         * usable type, then, for the fields a database must have, any property of that type.
+         * Priority is also recognised by its options. A property is never used twice.
          */
-        fun detect(schema: Schema): Detected {
-            fun pick(type: String, vararg names: String): SchemaProperty? {
-                val candidates = schema.properties.filter { it.type == type }.sortedBy { it.name }
-                return candidates.firstOrNull { it.name.trim().lowercase() in names } ?: candidates.firstOrNull()
+        fun guess(schema: Schema): Map<Field, String> {
+            val picked = mutableMapOf<Field, SchemaProperty>()
+            fun free(field: Field) = field.candidates(schema).filter { it !in picked.values }
+            for (field in Field.entries) {
+                free(field).firstOrNull { it.name.trim().lowercase() in field.names }?.let { picked[field] = it }
             }
-            fun named(type: String, name: String) =
-                schema.properties.firstOrNull { it.type == type && it.name.trim().equals(name, ignoreCase = true) }
+            for (field in Field.entries.filter { it !in picked }) {
+                val byType = when {
+                    field.required -> free(field).minByOrNull { it.name }
+                    field == Field.Priority -> free(field).firstOrNull { priorityOptions(it).isNotEmpty() }
+                    else -> null
+                }
+                byType?.let { picked[field] = it }
+            }
+            return picked.mapValues { it.value.id }
+        }
 
-            val title = pick("title")
-            val done = pick("checkbox", "done", "", "complete", "completed")
-            val date = pick("date", "date", "due", "due date", "when")
-            val missing = listOfNotNull("a date".takeIf { date == null }, "a checkbox".takeIf { done == null })
-            if (title == null || done == null || date == null) return Detected.Missing(missing)
-
-            val priority = named("select", "priority")
-            val project = named("select", "project")
-            return Detected.Ok(
-                PropertyMapping(
-                    title = title.id,
-                    done = done.id,
-                    date = date.id,
-                    priority = priority?.id,
-                    priorityOptions = Priority.entries.mapNotNull { level ->
-                        priority?.options?.firstOrNull { it.equals(level.label, ignoreCase = true) }?.let { level to it }
-                    }.toMap(),
-                    project = project?.id,
-                    noProjectOption = project?.options?.firstOrNull { it.equals(NO_PROJECT, ignoreCase = true) },
-                )
+        /** The mapping for [choices] (field to property id), or null while a required field is missing. */
+        fun from(schema: Schema, choices: Map<Field, String>): PropertyMapping? {
+            fun property(field: Field) = field.candidates(schema).firstOrNull { it.id == choices[field] }
+            val priority = property(Field.Priority)
+            val project = property(Field.Project)
+            return PropertyMapping(
+                title = property(Field.Title)?.id ?: return null,
+                done = property(Field.Done)?.id ?: return null,
+                date = property(Field.Date)?.id ?: return null,
+                priority = priority?.id,
+                priorityOptions = priority?.let(::priorityOptions).orEmpty(),
+                project = project?.id,
+                noProjectOption = project?.options?.firstOrNull { it.equals(NO_PROJECT, ignoreCase = true) },
             )
         }
 
+        private fun priorityOptions(property: SchemaProperty): Map<Priority, String> =
+            PRIORITY_NAMES.mapNotNull { (level, names) ->
+                property.options.firstOrNull { it.trim().lowercase() in names }?.let { level to it }
+            }.toMap()
+
+        private val PRIORITY_NAMES = mapOf(
+            Priority.High to setOf("high", "alta"),
+            Priority.Medium to setOf("medium", "media"),
+            Priority.Low to setOf("low", "bassa"),
+            Priority.None to setOf("none", "nessuna"),
+        )
+
         /** In the user's database, the default Project value "Task" stands for "no project". */
         private const val NO_PROJECT = "Task"
-    }
 
-    sealed interface Detected {
-        data class Ok(val mapping: PropertyMapping) : Detected
-        data class Missing(val what: List<String>) : Detected
+        private fun condition(property: String, type: String, test: String, value: String) = buildJsonObject {
+            put("property", property)
+            putJsonObject(type) { put(test, value) }
+        }
+
+        private fun allOf(vararg conditions: JsonObject) = buildJsonObject {
+            putJsonArray("and") { conditions.forEach { add(it) } }
+        }
     }
+}
+
+/**
+ * What the app needs from a database, as the setup screen lists it. [names] are the property
+ * names it recognises, in English and Italian; [types] are the Notion types that can hold it.
+ */
+enum class Field(val label: String, val required: Boolean, val types: Set<String>, val names: Set<String>) {
+    Title("Task name", true, setOf("title"), setOf("name", "title", "task", "nome", "titolo", "attività")),
+    Done("Done", true, setOf("checkbox"), setOf("done", "", "complete", "completed", "fatto", "completato")),
+    Date("Date", true, setOf("date"), setOf("due", "date", "due date", "when", "data", "scadenza", "quando")),
+    Priority("Priority", false, setOf("select"), setOf("priority", "priorità", "priorita")),
+    Project("Project", false, setOf("select"), setOf("project", "progetto")),
+    ;
+
+    /** The properties of [schema] that could play this role. */
+    fun candidates(schema: Schema): List<SchemaProperty> = schema.properties.filter { it.type in types }
 }
 
 private class Start(val at: LocalDateTime, val hasTime: Boolean) {
@@ -168,8 +225,8 @@ private fun parseStart(date: JsonObject, zone: ZoneId): Start? {
     }.getOrNull()
 }
 
-private fun TaskRow.startText(zone: ZoneId): String {
-    val day = LocalDate.parse(date)
+private fun TaskRow.startText(zone: ZoneId): String? {
+    val day = LocalDate.parse(date ?: return null)
     val time = minutes ?: return day.toString()
     return day.atTime(time / 60, time % 60).atZone(zone).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 }

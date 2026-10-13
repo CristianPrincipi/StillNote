@@ -26,6 +26,14 @@ interface TaskRepository {
 
     suspend fun restore(id: String)
 
+    /** Every project in card order, including ones with no tasks. */
+    fun observeProjects(): Flow<List<Project>>
+
+    /** Adds an empty project; a blank or existing name is ignored. */
+    suspend fun createProject(name: String)
+
+    val features: Flow<Features>
+
     val syncStatus: Flow<SyncStatus>
 
     /** True while some change was refused by Notion and is waiting for [retryFailedChanges]. */
@@ -33,6 +41,9 @@ interface TaskRepository {
 
     /** Asks for fresh tasks dated from [from] to [to]. Returns at once; the result arrives through [observeTasks]. */
     fun refresh(from: LocalDate, to: LocalDate)
+
+    /** Asks for the current projects and their tasks, whatever their dates. */
+    fun refreshProjects()
 
     fun retryFailedChanges()
 }

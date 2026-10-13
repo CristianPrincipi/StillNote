@@ -71,10 +71,11 @@ class StillNoteApp : Application() {
         }
     }
 
-    /** Sends whatever is waiting, and pulls the month around today. */
+    /** Sends whatever is waiting, and pulls the month around today and the projects. */
     fun syncNow() {
         PushWorker.schedule(this)
         refreshThisMonth()
+        tasks.refreshProjects()
     }
 
     /** Pulls the month around today, which covers Today and the Calendar's first page. */
@@ -85,9 +86,14 @@ class StillNoteApp : Application() {
 
     // Debug builds only, for tools/screens.py and tools/fake_notion.py.
 
+    /** True in demo mode, which also skips the first-run flow. */
+    var demo = false
+        private set
+
     /** Swaps in the mockups' sample tasks and their fixed "today". Nothing is saved or synced. */
     fun enterDemo() {
         check(BuildConfig.DEBUG)
+        demo = true
         clock = FixedDateClock(FakeData.today)
         tasks = FakeTaskRepository()
     }

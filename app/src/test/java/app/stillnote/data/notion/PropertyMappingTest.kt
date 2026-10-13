@@ -24,7 +24,7 @@ class PropertyMappingTest {
             SchemaProperty("%7CbqX", "Project", "select", listOf("Task", "David", "Arch", "Steady")),
         ),
     )
-    private val mapping = (PropertyMapping.detect(schema) as PropertyMapping.Detected.Ok).mapping
+    private val mapping = PropertyMapping.from(schema, PropertyMapping.guess(schema))!!
 
     private fun page(properties: String) = RemotePage(
         id = "page-1",
@@ -44,26 +44,59 @@ class PropertyMappingTest {
     }
 
     @Test
-    fun `reports what a database lacks`() {
-        val bare = Schema("Books", listOf(SchemaProperty("title", "Name", "title"), SchemaProperty("a", "Author", "rich_text")))
-        assertEquals(PropertyMapping.Detected.Missing(listOf("a date", "a checkbox")), PropertyMapping.detect(bare))
+    fun `needs a title, a checkbox and a date before it gives a mapping`() {
+        val books = Schema("Books", listOf(SchemaProperty("title", "Name", "title"), SchemaProperty("a", "Author", "rich_text")))
+        val guess = PropertyMapping.guess(books)
+        assertEquals(mapOf(Field.Title to "title"), guess)
+        assertNull(PropertyMapping.from(books, guess))
     }
 
     @Test
-    fun `prefers a checkbox called Done over others, and works without priority or project`() {
+    fun `matches by name first, then by type for the fields a database must have`() {
         val schema = Schema(
             "Todo",
             listOf(
                 SchemaProperty("title", "Task", "title"),
                 SchemaProperty("a", "Archived", "checkbox"),
                 SchemaProperty("b", "Done", "checkbox"),
-                SchemaProperty("c", "Due", "date"),
+                SchemaProperty("c", "Created", "date"),
+                SchemaProperty("d", "Area", "select", listOf("Home", "Work")),
             ),
         )
-        val detected = (PropertyMapping.detect(schema) as PropertyMapping.Detected.Ok).mapping
-        assertEquals("b", detected.done)
-        assertNull(detected.priority)
-        assertNull(detected.project)
+        // "Done" wins over "Archived" by name; the only date is taken by type; "Area" is not guessed to be a project.
+        assertEquals(mapOf(Field.Title to "title", Field.Done to "b", Field.Date to "c"), PropertyMapping.guess(schema))
+    }
+
+    @Test
+    fun `recognises Italian names, and a priority by its options`() {
+        val schema = Schema(
+            "Attività",
+            listOf(
+                SchemaProperty("title", "Nome", "title"),
+                SchemaProperty("a", "Fatto", "checkbox"),
+                SchemaProperty("b", "Scadenza", "date"),
+                SchemaProperty("c", "Urgenza", "select", listOf("Alta", "Media", "Bassa")),
+                SchemaProperty("d", "Progetto", "select", listOf("Casa")),
+            ),
+        )
+        val guess = PropertyMapping.guess(schema)
+        assertEquals(mapOf(Field.Title to "title", Field.Done to "a", Field.Date to "b", Field.Priority to "c", Field.Project to "d"), guess)
+        assertEquals(
+            mapOf(Priority.High to "Alta", Priority.Medium to "Media", Priority.Low to "Bassa"),
+            PropertyMapping.from(schema, guess)!!.priorityOptions,
+        )
+    }
+
+    @Test
+    fun `lists only properties of a usable type for each field, and honours the user's choice`() {
+        assertEquals(listOf("W%5BNU", "%7CbqX"), Field.Project.candidates(schema).map { it.id })
+        assertEquals(listOf("chk%3A"), Field.Done.candidates(schema).map { it.id })
+
+        // Left without a priority, and with Project pointed at the other select.
+        val chosen = PropertyMapping.from(schema, mapOf(Field.Title to "title", Field.Done to "chk%3A", Field.Date to "dt%7B", Field.Project to "W%5BNU"))!!
+        assertNull(chosen.priority)
+        assertEquals("W%5BNU", chosen.project)
+        assertNull(chosen.noProjectOption)
     }
 
     @Test
@@ -79,7 +112,7 @@ class PropertyMappingTest {
                 }"""
             ),
             rome,
-        )!!
+        )
         assertEquals("page-1", row.pageId)
         assertEquals("Call the dentist", row.title)
         assertEquals("2026-10-13", row.date)
@@ -96,7 +129,7 @@ class PropertyMappingTest {
         val row = mapping.toRow(
             page("""{"dt%7B": {"id": "dt%7B", "type": "date", "date": {"start": "2026-10-13T23:30:00.000-04:00"}}}"""),
             rome,
-        )!!
+        )
         assertEquals("2026-10-14", row.date)
         assertEquals(5 * 60 + 30, row.minutes)
     }
@@ -106,7 +139,7 @@ class PropertyMappingTest {
         val row = mapping.toRow(
             page("""{"dt%7B": {"id": "dt%7B", "type": "date", "date": {"start": "2026-10-13T09:00:00.000", "time_zone": "Europe/London"}}}"""),
             rome,
-        )!!
+        )
         assertEquals("2026-10-13", row.date)
         assertEquals(10 * 60, row.minutes)
     }
@@ -123,7 +156,7 @@ class PropertyMappingTest {
                 }"""
             ),
             rome,
-        )!!
+        )
         assertEquals("Untitled", row.title)
         assertEquals("None", row.priority)
         assertNull(row.project)
@@ -131,8 +164,10 @@ class PropertyMappingTest {
     }
 
     @Test
-    fun `skips a page with no date`() {
-        assertNull(mapping.toRow(page("""{"dt%7B": {"id": "dt%7B", "type": "date", "date": null}}"""), rome))
+    fun `keeps a page with no date, as an undated task`() {
+        val row = mapping.toRow(page("""{"dt%7B": {"id": "dt%7B", "type": "date", "date": null}}"""), rome)
+        assertNull(row.date)
+        assertNull(row.minutes)
     }
 
     @Test
@@ -157,6 +192,36 @@ class PropertyMappingTest {
         val properties = noNone.newPageProperties(row, rome)
         assertEquals(Json.parseToJsonElement("""{"date": {"start": "2026-10-13"}}"""), properties["dt%7B"])
         assertEquals(Json.parseToJsonElement("""{"select": null}"""), properties["W%5BNU"])
+    }
+
+    @Test
+    fun `files a new task under its project, which Notion adds as an option if it is new`() {
+        val row = TaskRow(id = "1", title = "Water the tomatoes", date = "2026-10-13", priority = "None", project = "Garden", created = 0)
+        assertEquals(Json.parseToJsonElement("""{"select": {"name": "Garden"}}"""), mapping.newPageProperties(row, rome)["%7CbqX"])
+    }
+
+    @Test
+    fun `builds the filters for a range of dates and for tasks that have a project`() {
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"and": [
+                    {"property": "dt%7B", "date": {"on_or_after": "2026-10-01"}},
+                    {"property": "dt%7B", "date": {"on_or_before": "2026-10-31"}}
+                ]}"""
+            ),
+            mapping.dateFilter(java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2026, 10, 31)),
+        )
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"and": [
+                    {"property": "%7CbqX", "select": {"is_not_empty": true}},
+                    {"property": "%7CbqX", "select": {"does_not_equal": "Task"}}
+                ]}"""
+            ),
+            mapping.projectFilter(),
+        )
+        assertNull(mapping.copy(project = null).projectFilter())
+        assertEquals(listOf("David", "Arch", "Steady"), mapping.projects(schema))
     }
 
     @Test

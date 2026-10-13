@@ -21,6 +21,7 @@ object StillColors {
     val indexRed = Color(0xFFE39C86)
     val indexBlue = Color(0xFFD3E2EA)
     val scrim = ink.copy(alpha = 0.42f)
+    val scrimLight = ink.copy(alpha = 0.32f)
     val tape = card.copy(alpha = 0.58f)
 
     // Darker versions of the post-it colours, readable as text on canary (widget rows).

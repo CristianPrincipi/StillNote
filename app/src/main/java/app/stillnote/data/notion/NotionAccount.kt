@@ -76,32 +76,26 @@ class NotionAccount(
         _tokenRejected.value = true
     }
 
-    /**
-     * Checks [token] with Notion, stores it, and returns the databases it can see. A chosen
-     * database the new token can't see is forgotten, along with the tasks that came from it.
-     */
-    suspend fun signIn(token: String): List<DataSource> {
+    /** Checks [token] with Notion and stores it. Throws [NotionException] if Notion refuses it or can't be reached. */
+    suspend fun signIn(token: String) {
         api.checkToken(token)
-        val sources = api.dataSources(token)
         withContext(Dispatchers.IO) { vault.save(token) }
         _tokenRejected.value = false
-        val chosen = store.database.first()
-        if (chosen != null && sources.none { it.id == chosen.id }) forgetDatabase()
-        return sources
     }
 
+    /** The databases the stored token can see. */
     suspend fun dataSources(): List<DataSource> = api.dataSources(token() ?: return emptyList())
 
-    /** Points the app at [source], or reports what the database lacks. */
-    suspend fun choose(source: DataSource): PropertyMapping.Detected {
-        val token = token() ?: return PropertyMapping.Detected.Missing(emptyList())
-        val schema = api.schema(token, source.id)
-        val detected = PropertyMapping.detect(schema)
-        if (detected is PropertyMapping.Detected.Ok) {
-            if (store.database.first()?.id != source.id) tasks.deleteSynced()
-            store.save(Database(source.id, schema.name, detected.mapping))
-        }
-        return detected
+    /** The properties of [source], for matching them to the app's fields. */
+    suspend fun schema(source: DataSource): Schema? = token()?.let { api.schema(it, source.id) }
+
+    /**
+     * Points the app at [source] with [mapping]. Changing to another database drops the tasks
+     * that came from the old one; they stay in Notion.
+     */
+    suspend fun choose(source: DataSource, mapping: PropertyMapping) {
+        if (store.database.first()?.id != source.id) tasks.deleteSynced()
+        store.save(Database(source.id, source.name, mapping))
     }
 
     /** Forgets the token and the database. Tasks that came from Notion leave the phone; they stay in Notion. */

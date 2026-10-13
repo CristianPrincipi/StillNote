@@ -37,6 +37,9 @@ val NoteShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 26.dp, cu
 val AddPadShape: Shape = CurlShape(top = 3.dp, bottomEnd = 3.dp, curlX = 13.dp, curlY = 6.dp)
 val MiniPostItShape: Shape = CurlShape(top = 2.dp, bottomEnd = 2.dp, curlX = 12.dp, curlY = 5.dp)
 val DayPostItShape: Shape = CurlShape(top = 2.dp, bottomEnd = 2.dp, curlX = 9.dp, curlY = 4.dp)
+val MenuSlipShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 14.dp, curlY = 6.dp)
+val PileSheetShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 22.dp, curlY = 8.dp)
+val PreviewPostItShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 16.dp, curlY = 6.dp)
 
 /** The slightly irregular circle of check buttons, the today ring and radio buttons. */
 val HandDrawnCircle: Shape = object : Shape {
@@ -57,4 +60,12 @@ val HandDrawnCircle: Shape = object : Shape {
 /** Tilt in degrees for the task post-it at [index]. */
 fun postItTilt(index: Int): Float = PostItTilts[index % PostItTilts.size]
 
+/** Tilt in degrees for the mini post-it at [index] on a project card. */
+fun miniPostItTilt(index: Int): Float = MiniPostItTilts[index % MiniPostItTilts.size]
+
+/** Tilt in degrees for the project card at [index]. */
+fun projectCardTilt(index: Int): Float = ProjectCardTilts[index % ProjectCardTilts.size]
+
 private val PostItTilts = floatArrayOf(-0.7f, 0.5f, -0.3f, 0.8f, -0.5f)
+private val MiniPostItTilts = floatArrayOf(-0.6f, 0.5f, -0.3f, 0.7f, -0.5f, 0.4f)
+private val ProjectCardTilts = floatArrayOf(-0.6f, 0.5f, -0.4f, 0.6f)

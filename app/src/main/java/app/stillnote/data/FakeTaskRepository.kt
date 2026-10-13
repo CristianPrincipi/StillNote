@@ -13,11 +13,12 @@ import java.time.YearMonth
 /** In-memory sample tasks from design/DESIGN.md §6 and Calendar.dc.html, for comparing debug builds with the mockups. */
 class FakeTaskRepository : TaskRepository {
     private val tasks = MutableStateFlow(FakeData.tasks())
+    private val projects = MutableStateFlow(FakeData.projects())
     private val trashed = mutableMapOf<String, Pair<Int, Task>>()
     private var created = 0
 
     override fun observeTasks(from: LocalDate, to: LocalDate): Flow<List<Task>> =
-        tasks.map { all -> all.filter { it.date in from..to } }.distinctUntilChanged()
+        tasks.map { all -> all.filter { task -> task.date?.let { it in from..to } == true } }.distinctUntilChanged()
 
     override suspend fun create(draft: TaskDraft): Task {
         val task = Task(
@@ -26,13 +27,19 @@ class FakeTaskRepository : TaskRepository {
             date = draft.date,
             time = draft.time,
             priority = draft.priority,
+            project = draft.project,
         )
         tasks.update { it + task }
+        projects.update { all -> all.map { if (it.name == task.project) it.copy(open = it.open + task) else it } }
         return task
     }
 
     override suspend fun setDone(id: String, done: Boolean) {
         tasks.update { all -> all.map { if (it.id == id) it.copy(done = done) else it } }
+        // The mockups' project cards have their own tasks: ticking one takes it off its card.
+        if (done) projects.update { all ->
+            all.map { if (it.open.any { task -> task.id == id }) it.copy(open = it.open.filterNot { task -> task.id == id }, done = it.done + 1) else it }
+        }
     }
 
     override suspend fun trash(id: String) {
@@ -48,6 +55,15 @@ class FakeTaskRepository : TaskRepository {
         val (index, task) = trashed.remove(id) ?: return
         tasks.update { all -> all.toMutableList().apply { add(index.coerceAtMost(size), task) } }
     }
+
+    override fun observeProjects(): Flow<List<Project>> = projects
+
+    override suspend fun createProject(name: String) {
+        if (name.isNotBlank()) projects.update { it + Project(name.trim(), emptyList(), 0) }
+    }
+
+    override val features: Flow<Features> = flowOf(Features())
+    override fun refreshProjects() = Unit
 
     override val syncStatus: Flow<SyncStatus> = flowOf(SyncStatus.Idle)
     override val hasFailedChanges: Flow<Boolean> = flowOf(false)
@@ -115,6 +131,33 @@ internal object FakeData {
         24 to listOf(Row("Giulia’s birthday", Priority.High, false)),
         26 to listOf(Row("Weekly review in Notion", Priority.Medium, false, "13:00")),
         29 to listOf(Row("Renew the train pass", Priority.Medium, false)),
+    )
+
+    /** The project cards as the Projects mockup draws them: (title, priority) pairs and a done count. */
+    fun projects(): List<Project> = listOf(
+        project(
+            "Work", 4,
+            "Reply to Marco about Friday" to Priority.High,
+            "Draft the Q4 plan" to Priority.High,
+            "Send the weekly report" to Priority.Medium,
+            "Review the access requests" to Priority.Medium,
+            "Book the meeting room" to Priority.Low,
+            "Tidy the shared folder" to Priority.None,
+        ),
+        project(
+            "Personal", 7,
+            "Buy a birthday card for Giulia" to Priority.High,
+            "Weekly review in Notion" to Priority.Medium,
+            "Call grandma" to Priority.Medium,
+        ),
+        project("Errands", 1, "Pick up the parcel" to Priority.Low, "Book the car service" to Priority.Medium),
+        project("Reading", 5, "Read 20 pages" to Priority.None),
+    )
+
+    private fun project(name: String, done: Int, vararg open: Pair<String, Priority>) = Project(
+        name = name,
+        open = open.mapIndexed { i, (title, priority) -> Task("$name-$i", title, date = null, priority = priority, project = name) },
+        done = done,
     )
 
     private val pool = listOf(

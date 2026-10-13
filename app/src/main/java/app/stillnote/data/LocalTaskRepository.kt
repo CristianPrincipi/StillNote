@@ -38,6 +38,7 @@ class LocalTaskRepository(
             date = draft.date.toString(),
             minutes = draft.time?.let { it.hour * 60 + it.minute },
             priority = draft.priority.name,
+            project = draft.project,
             created = now(),
             dirty = true,
             changedAt = now(),
@@ -62,6 +63,25 @@ class LocalTaskRepository(
         schedulePush()
     }
 
+    override fun observeProjects(): Flow<List<Project>> =
+        combine(tasks.observeProjects(), tasks.observeProjectTasks()) { projects, rows ->
+            val byProject = rows.map(TaskRow::toTask).groupBy { it.project }
+            // A task can name a project that isn't in the list yet; give it a card rather than hide it.
+            val names = projects.map { it.name } + byProject.keys.filterNotNull().filter { name -> projects.none { it.name == name } }
+            names.map { name ->
+                val (done, open) = byProject[name].orEmpty().partition { it.done }
+                Project(name, open.sortedWith(TaskOrder.project), done.size)
+            }
+        }
+
+    override suspend fun createProject(name: String) {
+        if (name.isNotBlank()) tasks.addLocalProject(name.trim())
+    }
+
+    override val features: Flow<Features> = account.database.map { database ->
+        database?.mapping?.let { Features(priority = it.priority != null, projects = it.project != null) } ?: Features()
+    }.distinctUntilChanged()
+
     override val syncStatus: Flow<SyncStatus> = combine(
         account.database,
         online,
@@ -82,6 +102,10 @@ class LocalTaskRepository(
 
     override fun refresh(from: LocalDate, to: LocalDate) {
         scope.launch { sync.pull(from, to) }
+    }
+
+    override fun refreshProjects() {
+        scope.launch { sync.pullProjects() }
     }
 
     override fun retryFailedChanges() {

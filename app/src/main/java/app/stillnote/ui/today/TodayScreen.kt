@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import app.stillnote.ui.components.Overline
 import app.stillnote.ui.components.PaperPage
 import app.stillnote.ui.components.ScreenTitle
 import app.stillnote.ui.components.Shadows
+import app.stillnote.ui.components.StayAtTop
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.StruckHandText
 import app.stillnote.ui.components.TapSize
@@ -114,8 +116,11 @@ private fun TodayHeader(state: TodayUiState, onOpenSettings: () -> Unit) {
 @Composable
 private fun TaskList(state: TodayUiState, viewModel: TodayViewModel, modifier: Modifier = Modifier) {
     val allClear = state.loaded && state.open.isEmpty()
+    val list = rememberLazyListState()
+    list.StayAtTop(firstKey = (state.open + state.done).firstOrNull()?.id)
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
+        state = list,
         contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 132.dp),
     ) {
         if (allClear) {

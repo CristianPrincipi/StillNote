@@ -230,7 +230,7 @@ private fun SelectedDay(state: CalendarUiState) {
             HandText("Nothing written down.", 19f, Modifier.padding(horizontal = 6.dp, vertical = 14.dp), color = StillColors.ink3)
         }
         Column {
-            state.selectedTasks.forEach { task -> DayTaskRow(task, missed = !task.done && task.date < state.today) }
+            state.selectedTasks.forEach { task -> DayTaskRow(task, missed = !task.done && day != null && day < state.today) }
         }
     }
 }

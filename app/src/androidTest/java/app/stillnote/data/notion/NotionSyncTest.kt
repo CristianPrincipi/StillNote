@@ -65,16 +65,27 @@ class NotionSyncTest {
     private fun local(id: String, title: String = id, date: String = "2026-10-13", done: Boolean = false) =
         TaskRow(id = id, title = title, date = date, priority = "None", done = done, created = clock, dirty = true, changedAt = clock)
 
-    private fun synced(id: String, pageId: String, date: String = "2026-10-13", done: Boolean = false) =
-        TaskRow(id = id, pageId = pageId, title = id, date = date, priority = "None", done = done, created = clock)
+    private fun synced(id: String, pageId: String, date: String? = "2026-10-13", done: Boolean = false, project: String? = null) =
+        TaskRow(id = id, pageId = pageId, title = id, date = date, priority = "None", done = done, project = project, created = clock)
 
-    private fun page(id: String, title: String, date: String = "2026-10-13", done: Boolean = false) = RemotePage(
+    private fun page(id: String, title: String, date: String? = "2026-10-13", done: Boolean = false, project: String? = null) = RemotePage(
         id = id,
         createdTime = 5,
-        properties = mapOf(
+        properties = listOfNotNull(
             "title" to buildJsonObject { put("title", kotlinx.serialization.json.JsonArray(listOf(buildJsonObject { put("plain_text", title) }))) },
             "chk" to buildJsonObject { put("checkbox", done) },
-            "dt" to buildJsonObject { putJsonObject("date") { put("start", date) } },
+            date?.let { "dt" to buildJsonObject { putJsonObject("date") { put("start", it) } } },
+            project?.let { "prj" to buildJsonObject { putJsonObject("select") { put("name", it) } } },
+        ).toMap(),
+    )
+
+    private val tasksSchema = Schema(
+        "Tasks",
+        listOf(
+            SchemaProperty("title", "Name", "title"),
+            SchemaProperty("chk", "Done", "checkbox"),
+            SchemaProperty("dt", "Date", "date"),
+            SchemaProperty("prj", "Project", "select", listOf("Task", "Work", "Home")),
         ),
     )
 
@@ -235,7 +246,7 @@ class NotionSyncTest {
         assertEquals(Outcome.Done, sync.pull(october.first, october.second))
 
         // Asked for a day more on each side, because Notion compares in UTC.
-        assertEquals(Triple("dt", LocalDate.of(2026, 9, 30), LocalDate.of(2026, 11, 1)), notion.queried.single())
+        assertEquals(mapping.dateFilter(LocalDate.of(2026, 9, 30), LocalDate.of(2026, 11, 1)), notion.queried.single())
         val byTitle = all().associateBy { it.title }
         assertEquals(setOf("Renamed", "From Notion", "elsewhere", "mine"), byTitle.keys)
         assertEquals("kept", byTitle.getValue("Renamed").id)
@@ -272,22 +283,61 @@ class NotionSyncTest {
     }
 
     @Test
+    fun aProjectPullBringsTheProjectsAndTheirTasksWhateverTheDate() = runBlocking {
+        notion.schemas["ds-1"] = tasksSchema
+        tasks.insert(synced("old", "p-old", date = "2026-03-02", project = "Work"))
+        tasks.insert(synced("moved", "p-moved", date = null, project = "Work"))
+        tasks.insert(synced("plain", "p-plain", project = null))
+        tasks.addLocalProject("Garden")
+        notion.pages = listOf(
+            page("p-old", "Still here", date = "2026-03-02", done = true, project = "Work"),
+            page("p-undated", "No date yet", date = null, project = "Home"),
+        )
+
+        assertEquals(Outcome.Done, sync.pullProjects())
+
+        assertEquals(mapping.projectFilter(), notion.queried.single())
+        // Notion's options in its order, minus "Task"; the project made here comes after them.
+        assertEquals(listOf("Work", "Home", "Garden"), tasks.observeProjects().first().map { it.name })
+        val byProject = tasks.observeProjectTasks().first().groupBy({ it.project }, { it.title })
+        assertEquals(mapOf("Work" to listOf("Still here"), "Home" to listOf("No date yet")), byProject)
+        assertNull(tasks.observeProjectTasks().first().first { it.title == "No date yet" }.date)
+        // A task with no project is none of this pull's business.
+        assertTrue(all().any { it.id == "plain" })
+
+        // Once Notion has an option called Garden, the local project is just a project.
+        notion.schemas["ds-1"] = tasksSchema.copy(properties = tasksSchema.properties.map { if (it.id == "prj") it.copy(options = it.options + "Garden") else it })
+        sync.pullProjects()
+        account.signOut()
+        assertTrue(tasks.observeProjects().first().isEmpty())
+    }
+
+    @Test
+    fun aProjectMadeOnThePhoneStaysWhenNotionIsDisconnected() = runBlocking {
+        notion.schemas["ds-1"] = tasksSchema
+        sync.pullProjects()
+        tasks.addLocalProject("Garden")
+        tasks.addLocalProject("garden")
+
+        account.signOut()
+
+        assertEquals(listOf("Garden"), tasks.observeProjects().first().map { it.name })
+    }
+
+    @Test
     fun choosingAnotherDatabaseOrSigningOutDropsNotionTasksAndKeepsLocalOnes() = runBlocking {
         tasks.insert(synced("theirs", "p-1"))
         tasks.insert(local("mine"))
-        notion.schemas["ds-2"] = Schema(
-            "Other",
-            listOf(SchemaProperty("title", "Name", "title"), SchemaProperty("c", "Done", "checkbox"), SchemaProperty("d", "Due", "date")),
-        )
+        val other = mapping.copy(done = "c", date = "d", priority = null, project = null)
 
-        assertTrue(account.choose(DataSource("ds-2", "Other")) is PropertyMapping.Detected.Ok)
-        assertEquals("ds-2", store.database.first()!!.id)
+        account.choose(DataSource("ds-2", "Other"), other)
+        assertEquals(Database("ds-2", "Other", other), store.database.first())
         assertEquals(listOf("mine"), all().map { it.id })
 
-        // A database without a date and a checkbox is refused, and the choice stays as it was.
-        notion.schemas["ds-3"] = Schema("Books", listOf(SchemaProperty("title", "Name", "title")))
-        assertEquals(PropertyMapping.Detected.Missing(listOf("a date", "a checkbox")), account.choose(DataSource("ds-3", "Books")))
-        assertEquals("ds-2", store.database.first()!!.id)
+        // Changing only the fields of the same database keeps what is on the phone.
+        tasks.insert(synced("kept", "p-2"))
+        account.choose(DataSource("ds-2", "Other"), other.copy(priority = "pri"))
+        assertEquals(setOf("mine", "kept"), all().map { it.id }.toSet())
 
         account.signOut()
         assertNull(vault.load())
@@ -304,7 +354,7 @@ private class ScriptedNotion : NotionApi {
     val schemas = mutableMapOf<String, Schema>()
     val created = mutableListOf<Pair<String, JsonObject>>()
     val updates = mutableListOf<Update>()
-    val queried = mutableListOf<Triple<String, LocalDate, LocalDate>>()
+    val queried = mutableListOf<JsonObject>()
     var failAll: Kind? = null
     val failUpdate = mutableMapOf<String, Kind>()
     var duringCreate: suspend () -> Unit = {}
@@ -320,9 +370,9 @@ private class ScriptedNotion : NotionApi {
 
     override suspend fun schema(token: String, dataSourceId: String): Schema = schemas.getValue(dataSourceId).also { called() }
 
-    override suspend fun query(token: String, dataSourceId: String, dateProperty: String, from: LocalDate, to: LocalDate): List<RemotePage> {
+    override suspend fun query(token: String, dataSourceId: String, filter: JsonObject): List<RemotePage> {
         called()
-        queried += Triple(dateProperty, from, to)
+        queried += filter
         return pages
     }
 

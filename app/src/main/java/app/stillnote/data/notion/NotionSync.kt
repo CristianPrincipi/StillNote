@@ -73,9 +73,20 @@ class NotionSync(
     suspend fun pull(from: LocalDate, to: LocalDate): Outcome = exclusive { connection ->
         val mapping = connection.database.mapping
         // Notion compares dates in UTC, so ask for a day more on each side and sort it out locally.
-        val pages = api.query(connection.token, connection.database.id, mapping.date, from.minusDays(1), to.plusDays(1))
+        val pages = api.query(connection.token, connection.database.id, mapping.dateFilter(from.minusDays(1), to.plusDays(1)))
         val zone = zone()
-        tasks.applyPull(from.toString(), to.toString(), pages.mapNotNull { mapping.toRow(it, zone) }, now() - SETTLE_MILLIS)
+        tasks.applyMonthPull(from.toString(), to.toString(), pages.map { mapping.toRow(it, zone) }, now() - SETTLE_MILLIS)
+        true
+    }
+
+    /** Brings the list of projects, and every task that has one, in line with Notion. */
+    suspend fun pullProjects(): Outcome = exclusive { connection ->
+        val mapping = connection.database.mapping
+        val filter = mapping.projectFilter() ?: return@exclusive false
+        tasks.applyProjects(mapping.projects(api.schema(connection.token, connection.database.id)))
+        val pages = api.query(connection.token, connection.database.id, filter)
+        val zone = zone()
+        tasks.applyProjectPull(pages.map { mapping.toRow(it, zone) }, now() - SETTLE_MILLIS)
         true
     }
 

@@ -1,10 +1,12 @@
 package app.stillnote.data.notion
 
 import kotlinx.serialization.json.JsonObject
-import java.time.LocalDate
 
-/** A Notion database the token can see. Since API version 2025-09-03 the rows live in its data source. */
-data class DataSource(val id: String, val name: String)
+/**
+ * A Notion database the token can see. Since API version 2025-09-03 the rows live in its data
+ * source. [parent] is the title of the page the database sits in, when the token can read it.
+ */
+data class DataSource(val id: String, val name: String, val parent: String? = null)
 
 data class SchemaProperty(
     val id: String,
@@ -27,8 +29,8 @@ interface NotionApi {
 
     suspend fun schema(token: String, dataSourceId: String): Schema
 
-    /** Pages whose [dateProperty] falls between [from] and [to], both inclusive, in UTC. */
-    suspend fun query(token: String, dataSourceId: String, dateProperty: String, from: LocalDate, to: LocalDate): List<RemotePage>
+    /** Every page that passes [filter], a Notion filter object. Trashed pages are left out. */
+    suspend fun query(token: String, dataSourceId: String, filter: JsonObject): List<RemotePage>
 
     /** Returns the new page's id. */
     suspend fun createPage(token: String, dataSourceId: String, properties: JsonObject): String

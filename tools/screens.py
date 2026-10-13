@@ -3,7 +3,7 @@
 
     python3 tools/screens.py
 
-Settings and the Notion states are covered by tools/notion_e2e.py.
+The first-run flow, Settings and the Notion states are covered by tools/notion_e2e.py.
 
 Needs adb, Pillow, and the debug build installed on an emulator set to the mockup's page:
 
@@ -64,6 +64,12 @@ def tap(label, times=1, nth=0):
     time.sleep(0.6)
 
 
+def close_sheet():
+    """Taps the scrim above a note or card, which closes it without saving."""
+    adb("shell", "input", "tap", "40", str(status_bar() + 60))
+    time.sleep(0.8)
+
+
 def launch(*extras):
     """Restarts the app. Debug builds accept `--ez demo true` and `--es notion_url <url>`."""
     adb("shell", "am", "force-stop", APP)
@@ -102,9 +108,12 @@ def shot(name):
     os.remove(raw)
 
 
-def compare(name):
-    """Saves mockup | app | difference and returns the share of pixels that clearly differ."""
-    mockup = Image.open(os.path.join(MOCKUPS, name + ".png")).convert("RGB")
+def compare(name, mockup=None):
+    """Saves mockup | app | difference and returns the share of pixels that clearly differ.
+
+    [mockup] names the mockup when the screenshot isn't saved under the mockup's own name.
+    """
+    mockup = Image.open(os.path.join(MOCKUPS, (mockup or name) + ".png")).convert("RGB")
     app = Image.open(os.path.join(OUT, name + ".png")).convert("RGB")
     difference = ImageChops.difference(mockup, app).convert("L")
     sheet = Image.new("RGB", (PAGE[0] * 3 + 20, PAGE[1]), "white")
@@ -117,17 +126,18 @@ def compare(name):
 
 def main():
     os.makedirs(os.path.join(OUT, "compare"), exist_ok=True)
-    # Demo mode shows the mockups' sample tasks on their fixed "today", whatever is on the phone.
+    # Demo mode shows the mockups' sample tasks on their fixed "today", whatever is on the phone,
+    # and skips the first-run flow.
     launch("--ez", "demo", "true")
     wait_for_label("Mark Reply to Marco about Friday as done")
 
-    shot("01-today")
+    shot("05-today")
 
     tap("Add a task")
     time.sleep(1)
-    shot("02-new-task-keyboard")
+    shot("06-new-task-keyboard")
     back()  # hides the keyboard, which the mockup doesn't draw
-    shot("02-new-task")
+    shot("06-new-task")
 
     type_text("Buy a birthday card for Giulia")
     tap("Set date and time")
@@ -135,21 +145,38 @@ def main():
     shown = next(label for label, _ in nodes() if re.fullmatch(r"\d\d:\d\d", label))
     minutes = int(shown[:2]) * 60 + int(shown[3:])
     tap("30 minutes later", times=(18 * 60 - minutes) // 30 % 48)
-    shot("03-new-task-date-time")
+    shot("07-new-task-date-time")
 
     tap("Set priority")
     tap("High")
-    shot("04-new-task-priority")
-    back()
+    shot("08-new-task-priority")
+    close_sheet()
 
     tap("CALENDAR")
-    shot("05-calendar")
+    shot("09-calendar")
+
     tap("PROJECTS")
-    shot("06-projects")  # a blank page for now, so there is nothing to compare it with
+    wait_for_label("Mark Draft the Q4 plan as done")
+    shot("10-projects")
+    tap("Add a task or project")
+    shot("11-projects-add-menu")
+    tap("New task")
+    tap("What needs doing?")
+    type_text("Send the slides to Marco")
+    back()  # hides the keyboard
+    shot("12-new-task-project")
+    close_sheet()
+    tap("Add a task or project")
+    tap("New project")
+    type_text("Garden")
+    back()  # hides the keyboard
+    shot("13-new-project")
+    close_sheet()
     tap("TASKS")
 
-    # Settings is compared by tools/notion_e2e.py, which can show it connected like the mockup.
-    for name in ("01-today", "02-new-task", "03-new-task-date-time", "04-new-task-priority", "05-calendar"):
+    # The first-run screens and Settings are compared by tools/notion_e2e.py, which needs a fake Notion.
+    for name in ("05-today", "06-new-task", "07-new-task-date-time", "08-new-task-priority", "09-calendar",
+                 "10-projects", "11-projects-add-menu", "12-new-task-project", "13-new-project"):
         print(f"{name}: {compare(name):.1%} of pixels differ")
 
 

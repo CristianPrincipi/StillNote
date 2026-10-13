@@ -18,8 +18,8 @@ data class TaskRow(
     /** The Notion page, once the task exists there. */
     val pageId: String? = null,
     val title: String,
-    /** ISO local date, so it sorts and compares as text. */
-    val date: String,
+    /** ISO local date, so it sorts and compares as text. Null for a Notion task with no date. */
+    val date: String?,
     /** Time of day in minutes, or null for "any time". */
     val minutes: Int? = null,
     val priority: String,
@@ -43,9 +43,18 @@ data class TaskRow(
 fun TaskRow.toTask() = Task(
     id = id,
     title = title,
-    date = LocalDate.parse(date),
+    date = date?.let(LocalDate::parse),
     time = minutes?.let { LocalTime.of(it / 60, it % 60) },
     priority = Priority.valueOf(priority),
     project = project,
     done = done,
+)
+
+/** A project card. Its name is the label tasks carry, which in Notion is a select option. */
+@Entity(tableName = "projects")
+data class ProjectRow(
+    @PrimaryKey val name: String,
+    val position: Int,
+    /** Made on this phone and not (yet) an option in Notion. */
+    val local: Boolean = false,
 )

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [TaskRow::class], version = 1)
+@Database(entities = [TaskRow::class, ProjectRow::class], version = 1)
 abstract class StillDatabase : RoomDatabase() {
     abstract fun tasks(): TaskDao
 

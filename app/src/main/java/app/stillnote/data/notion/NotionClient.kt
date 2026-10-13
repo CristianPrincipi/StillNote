@@ -13,7 +13,6 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -21,7 +20,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.time.Instant
-import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 /**
@@ -39,8 +37,8 @@ class NotionClient(
         call(token, "GET", "/v1/users/me")
     }
 
-    override suspend fun dataSources(token: String): List<DataSource> =
-        paged(MAX_DATA_SOURCES) { cursor ->
+    override suspend fun dataSources(token: String): List<DataSource> {
+        val sources = paged(MAX_DATA_SOURCES) { cursor ->
             call(token, "POST", "/v1/search", buildJsonObject {
                 putJsonObject("filter") {
                     put("property", "object")
@@ -49,9 +47,25 @@ class NotionClient(
                 put("page_size", PAGE_SIZE)
                 cursor?.let { put("start_cursor", it) }
             })
+        }.filter { it.string("object") == "data_source" && it.boolean("in_trash") != true }
+
+        // One request per distinct parent page; a page the token can't read just has no name.
+        val parents = mutableMapOf<String, String?>()
+        return sources.mapNotNull { source ->
+            val id = source.string("id") ?: return@mapNotNull null
+            val parentId = source.obj("database_parent")?.string("page_id")
+            val parent = parentId?.let { parents.getOrPut(it) { pageTitle(token, it) } }
+            DataSource(id, source.plainText("title"), parent)
         }
-            .filter { it.string("object") == "data_source" && it.boolean("in_trash") != true }
-            .mapNotNull { source -> source.string("id")?.let { DataSource(it, source.plainText("title")) } }
+    }
+
+    private suspend fun pageTitle(token: String, pageId: String): String? = try {
+        call(token, "GET", "/v1/pages/$pageId").obj("properties")?.values
+            ?.firstNotNullOfOrNull { (it as? JsonObject)?.takeIf { value -> value.string("type") == "title" } }
+            ?.plainText("title")
+    } catch (e: NotionException) {
+        null
+    }
 
     override suspend fun schema(token: String, dataSourceId: String): Schema {
         val source = call(token, "GET", "/v1/data_sources/$dataSourceId")
@@ -64,21 +78,10 @@ class NotionClient(
         return Schema(source.plainText("title"), properties)
     }
 
-    override suspend fun query(
-        token: String,
-        dataSourceId: String,
-        dateProperty: String,
-        from: LocalDate,
-        to: LocalDate,
-    ): List<RemotePage> =
+    override suspend fun query(token: String, dataSourceId: String, filter: JsonObject): List<RemotePage> =
         paged(MAX_PAGES) { cursor ->
             call(token, "POST", "/v1/data_sources/$dataSourceId/query", buildJsonObject {
-                putJsonObject("filter") {
-                    putJsonArray("and") {
-                        add(dateFilter(dateProperty, "on_or_after", from))
-                        add(dateFilter(dateProperty, "on_or_before", to))
-                    }
-                }
+                put("filter", filter)
                 put("page_size", PAGE_SIZE)
                 cursor?.let { put("start_cursor", it) }
             })
@@ -107,11 +110,6 @@ class NotionClient(
             put("in_trash", inTrash)
             properties?.let { put("properties", it) }
         })
-    }
-
-    private fun dateFilter(property: String, condition: String, date: LocalDate) = buildJsonObject {
-        put("property", property)
-        putJsonObject("date") { put(condition, date.toString()) }
     }
 
     /** Follows `next_cursor` until the list ends or [limit] results are in. */
