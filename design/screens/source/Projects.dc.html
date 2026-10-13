@@ -21,28 +21,49 @@ body{margin:0}
     <p style="margin: 0; font-size: 12px; color: #4F463D">{{summary}}</p>
   </header>
 
-  <main style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 22px 22px 28px 22px">
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; column-gap: 16px">
-      <sc-for list="{{projects}}" as="p" hint-placeholder-count="4">
-        <button type="button" aria-label="{{p.aria}}" style="height: 158px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 0; text-align: left; background-color: #FCFAF5; background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 23px, #D3E2EA 23px, #D3E2EA 24px); border-radius: 2px; box-shadow: 0 1px 1px rgba(42, 38, 33, 0.07), 0 12px 14px -12px rgba(42, 38, 33, 0.55); transform: rotate({{p.rot}}); color: #2A2621; font: inherit; cursor: pointer">
-          <span style="display: block; height: 50px; box-sizing: border-box; padding: 11px 14px 0 14px; background: #FCFAF5; border-bottom: 1.2px solid #E39C86; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 24px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</span>
-          <span style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 10px 14px 14px 14px">
-            <span style="font-size: 11.5px; letter-spacing: 0.04em; color: #4F463D">{{p.count}}</span>
-            <span aria-hidden="true" style="display: flex; flex-wrap: wrap; gap: 4px">
-              <sc-for list="{{p.squares}}" as="q" hint-placeholder-count="6">
-                <span style="display: block; width: 9px; height: 9px; box-sizing: border-box; border: 1.2px solid #2A2621; background: {{q.bg}}"></span>
-              </sc-for>
-            </span>
-          </span>
-        </button>
-      </sc-for>
+  <main style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 22px 22px 120px 22px; display: flex; flex-direction: column; gap: 26px">
+    <sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+      <section aria-label="{{p.name}}" style="flex: none; display: flex; flex-direction: column; background-color: #FCFAF5; background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 23px, #D3E2EA 23px, #D3E2EA 24px); border-radius: 2px; box-shadow: 0 1px 1px rgba(42, 38, 33, 0.07), 0 14px 16px -12px rgba(42, 38, 33, 0.55); transform: rotate({{p.rot}})">
+        <header style="flex: none; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; height: 54px; box-sizing: border-box; padding: 12px 16px 0 16px; background: #FCFAF5; border-bottom: 1.2px solid #E39C86">
+          <h2 style="margin: 0; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 25px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</h2>
+          <span style="flex: none; font-size: 11.5px; letter-spacing: 0.04em; color: #4F463D">{{p.count}}</span>
+        </header>
 
-      <button type="button" style="height: 158px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0; border: 1.5px dashed #8A7F72; border-radius: 2px; background: transparent; color: #2A2621; font: inherit; cursor: pointer">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-        <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 20px; line-height: 1.2">New project</span>
-      </button>
-    </div>
+        <sc-if value="{{p.empty}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding: 16px 18px 18px 18px; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 18px; line-height: 1.3; color: #6A6056">Nothing left here.</p>
+        </sc-if>
+
+        <ul aria-label="Next to do in {{p.name}}" style="list-style: none; margin: 0; padding: 12px 14px 14px 14px; box-sizing: border-box; max-height: 258px; overflow-y: auto; display: flex; flex-direction: column; gap: 9px">
+          <sc-for list="{{p.items}}" as="t" hint-placeholder-count="3">
+            <li style="flex: none; display: flex; align-items: center; gap: 2px; min-height: 44px; box-sizing: border-box; padding: 0 12px 0 2px; background: {{t.bg}}; border: {{t.border}}; border-radius: 2px 2px 2px 12px / 2px 2px 2px 5px; box-shadow: 0 1px 1px rgba(42, 38, 33, 0.08), 0 8px 9px -8px rgba(42, 38, 33, 0.55); transform: rotate({{t.rot}})">
+              <button type="button" onClick="{{t.complete}}" aria-label="Mark {{t.title}} as done" style="flex: none; width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; cursor: pointer">
+                <span style="display: block; width: 18px; height: 18px; box-sizing: border-box; border: 1.5px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%"></span>
+              </button>
+              <span style="flex: 1; min-width: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-size: 17px; line-height: 1.2; color: #2A2621; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+            </li>
+          </sc-for>
+        </ul>
+      </section>
+    </sc-for>
   </main>
+
+  <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+    <button type="button" onClick="{{closeMenu}}" aria-label="Close menu" style="position: absolute; z-index: 4; left: 0; top: 0; width: 390px; height: 844px; padding: 0; border: 0; background: rgba(42, 38, 33, 0.32); cursor: pointer"></button>
+    <div role="menu" aria-label="Add" style="position: absolute; z-index: 5; right: 24px; bottom: 186px; display: flex; flex-direction: column; align-items: flex-end; gap: 16px">
+      <a role="menuitem" href="NewProject.dc.html" style="display: inline-flex; align-items: center; gap: 12px; min-height: 52px; box-sizing: border-box; padding: 0 22px 0 16px; background-color: #FCFAF5; background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 16px, #D3E2EA 16px, #D3E2EA 17px); border-radius: 2px 2px 3px 14px / 2px 2px 3px 6px; box-shadow: 0 1px 1px rgba(42, 38, 33, 0.08), 0 14px 16px -12px rgba(20, 16, 12, 0.7); transform: rotate(1.5deg); color: #2A2621; text-decoration: none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="13" height="12" rx="1"></rect><path d="M7.5 8.5V4.5h13v11.5h-4"></path></svg>
+        <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 20px; line-height: 1.2">New project</span>
+      </a>
+      <a role="menuitem" href="ProjectNewTask.dc.html" style="display: inline-flex; align-items: center; gap: 12px; min-height: 52px; box-sizing: border-box; padding: 0 22px 0 16px; background: #F7E08C; border-radius: 2px 2px 3px 14px / 2px 2px 3px 6px; box-shadow: 0 1px 1px rgba(42, 38, 33, 0.08), 0 14px 16px -12px rgba(20, 16, 12, 0.7); transform: rotate(-2deg); color: #2A2621; text-decoration: none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v10.5L13.5 20H5z"></path><path d="M13.5 20v-5.5H19"></path></svg>
+        <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-size: 20px; line-height: 1.2">New task</span>
+      </a>
+    </div>
+  </sc-if>
+
+  <button type="button" onClick="{{toggleMenu}}" aria-label="{{padLabel}}" aria-haspopup="menu" aria-expanded="{{menuOpen}}" style="position: absolute; z-index: 6; right: 26px; bottom: 104px; width: 60px; height: 60px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; background: #F7E08C; color: #2A2621; border: 1.6px solid #2A2621; border-radius: 3px 3px 3px 13px / 3px 3px 3px 6px; transform: rotate(-4deg); box-shadow: 4px 4px 0 -1.6px #F7E08C, 4px 4px 0 0 #2A2621, 0 18px 20px -12px rgba(42, 38, 33, 0.55); cursor: pointer">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="transform: rotate({{iconRot}}); transition: transform 200ms ease"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+  </button>
 
   <nav aria-label="Main" style="flex: none; position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 6px 16px 16px 16px; background: #F3EEE4; border-top: 1px solid #D9CFBD">
     <a href="Calendar.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 58px; text-decoration: none; color: #4F463D; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase">
@@ -60,30 +81,70 @@ body{margin:0}
   </nav>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"menuOpen":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      menu: !!(props && props.menuOpen),
+      projects: [
+        { id: 'work', name: 'Work', done: 4, rot: '-0.6deg', tasks: [
+          { id: 'w1', title: 'Reply to Marco about Friday', pr: 'high' },
+          { id: 'w2', title: 'Draft the Q4 plan', pr: 'high' },
+          { id: 'w3', title: 'Send the weekly report', pr: 'med' },
+          { id: 'w4', title: 'Review the access requests', pr: 'med' },
+          { id: 'w5', title: 'Book the meeting room', pr: 'low' },
+          { id: 'w6', title: 'Tidy the shared folder', pr: 'none' }
+        ] },
+        { id: 'personal', name: 'Personal', done: 7, rot: '0.5deg', tasks: [
+          { id: 'p1', title: 'Buy a birthday card for Giulia', pr: 'high' },
+          { id: 'p2', title: 'Weekly review in Notion', pr: 'med' },
+          { id: 'p3', title: 'Call grandma', pr: 'med' }
+        ] },
+        { id: 'errands', name: 'Errands', done: 1, rot: '-0.4deg', tasks: [
+          { id: 'e1', title: 'Pick up the parcel', pr: 'low' },
+          { id: 'e2', title: 'Book the car service', pr: 'med' }
+        ] },
+        { id: 'reading', name: 'Reading', done: 5, rot: '0.6deg', tasks: [
+          { id: 'r1', title: 'Read 20 pages', pr: 'none' }
+        ] }
+      ]
+    };
+  }
+  complete(pid, tid) {
+    this.setState({
+      projects: this.state.projects.map((p) => (p.id !== pid ? p : Object.assign({}, p, {
+        done: p.done + 1,
+        tasks: p.tasks.filter((t) => t.id !== tid)
+      })))
+    });
+  }
   renderVals() {
-    const LIST = [
-      { name: 'Work', open: 6, done: 4, rot: '-1deg' },
-      { name: 'Personal', open: 3, done: 7, rot: '0.8deg' },
-      { name: 'Errands', open: 2, done: 1, rot: '0.6deg' },
-      { name: 'Reading', open: 1, done: 5, rot: '-0.9deg' }
-    ];
-    const totalOpen = LIST.reduce((a, p) => a + p.open, 0);
+    const BG = { high: '#F4B795', med: '#F7E08C', low: '#CFE1EA', none: '#FCFAF5' };
+    const TILT = ['-0.6deg', '0.5deg', '-0.3deg', '0.7deg', '-0.5deg', '0.4deg'];
+    const s = this.state || { menu: false, projects: [] };
+    const list = s.projects || [];
+    const totalOpen = list.reduce((a, p) => a + p.tasks.length, 0);
     return {
-      summary: LIST.length + ' projects · ' + totalOpen + ' open notes',
-      projects: LIST.map((p) => {
-        const squares = [];
-        for (let i = 0; i < p.done; i++) squares.push({ bg: '#2A2621' });
-        for (let i = 0; i < p.open; i++) squares.push({ bg: 'transparent' });
-        return {
-          name: p.name,
-          rot: p.rot,
-          count: p.open + ' open · ' + p.done + ' done',
-          aria: p.name + ', ' + p.open + ' open, ' + p.done + ' done',
-          squares
-        };
-      })
+      summary: list.length + ' projects · ' + totalOpen + ' open notes',
+      menuOpen: !!s.menu,
+      iconRot: s.menu ? '45deg' : '0deg',
+      padLabel: s.menu ? 'Close menu' : 'Add a task or project',
+      toggleMenu: () => this.setState({ menu: !s.menu }),
+      closeMenu: () => this.setState({ menu: false }),
+      projects: list.map((p) => ({
+        name: p.name,
+        rot: p.rot,
+        count: p.tasks.length + ' open · ' + p.done + ' done',
+        empty: p.tasks.length === 0,
+        items: p.tasks.map((t, i) => ({
+          title: t.title,
+          bg: BG[t.pr],
+          border: t.pr === 'none' ? '1px solid rgba(42, 38, 33, 0.14)' : '1px solid transparent',
+          rot: TILT[i % TILT.length],
+          complete: () => this.complete(p.id, t.id)
+        }))
+      }))
     };
   }
 }
