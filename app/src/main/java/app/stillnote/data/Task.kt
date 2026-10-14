@@ -47,6 +47,11 @@ object TaskOrder {
     /** Done tasks first, then the Today order. */
     val calendarDay: Comparator<Task> = compareByDescending<Task> { it.done }.then(today)
 
+    /** The widget's order: High to None, then by time with untimed tasks last. */
+    val widget: Comparator<Task> = compareBy<Task> { it.priority.ordinal }
+        .thenBy { it.time == null }
+        .thenBy { it.time ?: LocalTime.MIN }
+
     /** Soonest date first with undated tasks last, then High to None. */
     val project: Comparator<Task> = compareBy<Task> { it.date == null }
         .thenBy { it.date ?: LocalDate.MIN }

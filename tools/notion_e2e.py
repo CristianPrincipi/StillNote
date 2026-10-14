@@ -18,7 +18,7 @@ from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fake_notion  # noqa: E402
-from screens import APP, OUT, adb, back, close_sheet, compare, launch, nodes, shot, tap, type_text  # noqa: E402
+from screens import APP, OUT, adb, back, close_sheet, compare, launch, nodes, place_widget, shot, tap, type_text  # noqa: E402
 
 PORT = 8787
 TOKEN = "fake-token-for-stillnote"  # 24 characters, like the dots in the Settings mockup
@@ -235,14 +235,15 @@ def without_notion_then_connected():
         expect(on_screen("Pulled from Notion"), "pulling Today down brings in a task just added in Notion")
 
         print("With the app closed")
-        adb("shell", "input", "keyevent", "KEYCODE_HOME")
-        time.sleep(1)
+        place_widget()
         adb("shell", "am", "kill", APP)
-        notion.add_task("Added while away", today, "19:00")
+        # High and early, so it is on the widget's first row.
+        notion.add_task("Added while away", today, "07:00", "High")
         asked = len(notion.requests)
         jobs = run_scheduled_work()
         expect(wait_for(lambda: any(path.endswith("/query") for _, path, _ in notion.requests[asked:]), 30),
                f"the background sync asks Notion while the app is closed ({jobs} jobs run)")
+        expect(wait_for(lambda: "Mark Added while away as done" in labels(), 20), "and the widget on the home screen shows the task")
         time.sleep(2)
         # With Notion refusing everything, only the background sync can have brought the task in.
         notion.fail, notion.fail_status = "all", 400

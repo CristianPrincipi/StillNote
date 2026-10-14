@@ -1,6 +1,7 @@
 package app.stillnote.data.notion
 
 import android.content.Context
+import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -12,6 +13,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.stillnote.StillNoteApp
+import app.stillnote.widget.TodayWidget
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -24,6 +26,8 @@ import java.util.concurrent.TimeUnit
 class PullWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         (applicationContext as StillNoteApp).syncInBackground()
+        // Before the process may go away; also what turns the widget to a new day at midnight.
+        TodayWidget().updateAll(applicationContext)
         if (MIDNIGHT in tags) scheduleMidnight(applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
         // A run that couldn't reach Notion just waits for the next one.
         return Result.success()

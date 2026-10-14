@@ -2,16 +2,20 @@ package app.stillnote
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.content.edit
+import androidx.glance.appwidget.updateAll
 import app.stillnote.data.AppClock
 import app.stillnote.data.Connectivity
 import app.stillnote.data.DeviceClock
 import app.stillnote.data.FakeData
 import app.stillnote.data.FakeTaskRepository
 import app.stillnote.data.FixedDateClock
+import app.stillnote.data.HandFont
 import app.stillnote.data.LocalTaskRepository
 import app.stillnote.data.SettingsStore
+import app.stillnote.data.TaskOrder
 import app.stillnote.data.TaskRepository
 import app.stillnote.data.local.StillDatabase
 import app.stillnote.data.notion.KeystoreTokenVault
@@ -21,12 +25,21 @@ import app.stillnote.data.notion.NotionSync
 import app.stillnote.data.notion.PreferencesDatabaseStore
 import app.stillnote.data.notion.PullWorker
 import app.stillnote.data.notion.PushWorker
+import app.stillnote.widget.TodayWidget
+import app.stillnote.widget.WidgetKind
+import app.stillnote.widget.WidgetNote
+import app.stillnote.widget.WidgetPainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
@@ -56,6 +69,8 @@ class StillNoteApp : Application() {
     lateinit var tasks: TaskRepository
         private set
 
+    private var widgetWatch: Job? = null
+
     override fun onCreate() {
         super.onCreate()
         clock = DeviceClock(scope)
@@ -74,6 +89,27 @@ class StillNoteApp : Application() {
                 if (connected) PullWorker.start(this@StillNoteApp) else PullWorker.stop(this@StillNoteApp)
             }
         }
+        watchWidget()
+    }
+
+    /** What the widget shows, kept current: today's open tasks in the widget's order, and the hand font. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun widgetNotes(): Flow<WidgetNote> {
+        val tasks = tasks
+        val today = clock.today.flatMapLatest { day -> tasks.observeTasks(day, day).map { day to it } }
+        return combine(today, settings.handFont) { (day, all), font ->
+            WidgetNote(day, all.filter { !it.done }.sortedWith(TaskOrder.widget), font)
+        }.distinctUntilChanged()
+    }
+
+    /**
+     * Redraws the widget whenever what it shows changes, for as long as the app runs: after a
+     * change made in the app or the widget, a sync, a new font, or midnight. A widget that is on
+     * screen already redraws by itself; this reaches the ones whose drawing has gone to sleep.
+     */
+    private fun watchWidget() {
+        widgetWatch?.cancel()
+        widgetWatch = scope.launch { widgetNotes().collect { TodayWidget().updateAll(this@StillNoteApp) } }
     }
 
     /** Sends whatever is waiting, and pulls the month around today and the projects. */
@@ -117,6 +153,24 @@ class StillNoteApp : Application() {
         demo = true
         clock = FixedDateClock(FakeData.today)
         tasks = FakeTaskRepository()
+        watchWidget()
+    }
+
+    /** Draws the widget's two mockup frames, and the picker preview, from the sample tasks into [dir]. */
+    fun renderWidgetMockups(dir: File) {
+        check(BuildConfig.DEBUG)
+        val open = FakeData.tasks().filter { it.date == FakeData.today && !it.done }.sortedWith(TaskOrder.widget)
+        val note = WidgetNote(FakeData.today, open, HandFont.Handwritten)
+        val painter = WidgetPainter(this)
+        dir.mkdirs()
+        val drawings = mapOf(
+            "15-widget-2x2" to painter.paintMockup(note, WidgetKind.Square),
+            "16-widget-4x2" to painter.paintMockup(note, WidgetKind.Wide),
+            "widget_preview" to painter.paintPreview(note),
+        )
+        for ((name, bitmap) in drawings) {
+            File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
     }
 
     /** Points the Notion client at another server, or back at Notion when [url] is empty. */
