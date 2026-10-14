@@ -7,6 +7,7 @@ import app.stillnote.data.SyncStatus
 import app.stillnote.data.Task
 import app.stillnote.data.TaskOrder
 import app.stillnote.data.TaskRepository
+import app.stillnote.ui.SyncOnPull
 import app.stillnote.ui.calm
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,7 @@ data class CalendarUiState(
     val selected: LocalDate? = null,
     val selectedTasks: List<Task> = emptyList(),
     val sync: SyncStatus = SyncStatus.Idle,
+    val canSync: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -56,8 +58,9 @@ class CalendarViewModel(private val tasks: TaskRepository, private val clock: Ap
                 tasks.observeTasks(month.atDay(1), month.atEndOfMonth()),
                 selected,
                 tasks.syncStatus.calm(),
-            ) { all, day, sync ->
-                build(today, month, day?.takeIf { YearMonth.from(it) == month }, all).copy(sync = sync)
+                tasks.features,
+            ) { all, day, sync, features ->
+                build(today, month, day?.takeIf { YearMonth.from(it) == month }, all).copy(sync = sync, canSync = features.notion)
             }
         }
         .stateIn(
@@ -76,6 +79,15 @@ class CalendarViewModel(private val tasks: TaskRepository, private val clock: Ap
     fun select(date: LocalDate) {
         selected.value = date
     }
+
+    /** Pulls the month on screen. */
+    private val pull = SyncOnPull(viewModelScope) {
+        val shown = month.value
+        tasks.syncNow(shown.atDay(1), shown.atEndOfMonth())
+    }
+    val syncing: StateFlow<Boolean> = pull.running
+
+    fun syncNow() = pull.start()
 
     private fun show(next: YearMonth) {
         val today = clock.today.value

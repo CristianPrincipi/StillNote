@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,13 +36,15 @@ import app.stillnote.ui.theme.LocalHandFont
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.family
 import app.stillnote.ui.today.TodayScreen
+import app.stillnote.widget.WidgetRequest
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * The whole app: the first-run flow until it has been finished once, then three tabs with
  * Tasks as home, Settings as a sub-page, and the new-task note and new-project card on top.
  */
 @Composable
-fun StillNoteRoot() {
+fun StillNoteRoot(widgetRequest: MutableStateFlow<WidgetRequest?>) {
     val app = LocalContext.current.applicationContext as StillNoteApp
     val settings: SettingsViewModel = viewModel(factory = StillViewModels)
     val setup: SetupViewModel = viewModel(factory = StillViewModels)
@@ -53,13 +56,13 @@ fun StillNoteRoot() {
         val font = handFont ?: return@Box
         val firstRun = !(setupDone ?: return@Box) && !app.demo
         CompositionLocalProvider(LocalHandFont provides font.family) {
-            if (firstRun) SetupFlow(setup, onDone = {}) else MainScreens(settings, setup)
+            if (firstRun) SetupFlow(setup, onDone = {}) else MainScreens(settings, setup, widgetRequest)
         }
     }
 }
 
 @Composable
-private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel) {
+private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, widgetRequest: MutableStateFlow<WidgetRequest?>) {
     val newTask: NewTaskViewModel = viewModel(factory = StillViewModels)
     val projects: ProjectsViewModel = viewModel(factory = StillViewModels)
     val draft by newTask.draft.collectAsStateWithLifecycle()
@@ -71,6 +74,18 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel) {
     var addMenuOpen by rememberSaveable { mutableStateOf(false) }
     var newProjectOpen by rememberSaveable { mutableStateOf(false) }
     val sheetOpen = draft != null || newProjectOpen
+
+    // The widget's header and "+N more" open Today; its "+" opens the note, unless one is already being written.
+    val request by widgetRequest.collectAsStateWithLifecycle()
+    LaunchedEffect(request) {
+        val asked = request ?: return@LaunchedEffect
+        tab = Tab.Tasks
+        settingsOpen = false
+        addMenuOpen = false
+        newProjectOpen = false
+        if (asked == WidgetRequest.NewTask && newTask.draft.value == null) newTask.open()
+        widgetRequest.value = null
+    }
 
     BackHandler(enabled = sheetOpen || addMenuOpen || settingsOpen || tab != Tab.Tasks) {
         when {

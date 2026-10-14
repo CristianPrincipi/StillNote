@@ -79,7 +79,7 @@ class LocalTaskRepository(
     }
 
     override val features: Flow<Features> = account.database.map { database ->
-        database?.mapping?.let { Features(priority = it.priority != null, projects = it.project != null) } ?: Features()
+        database?.mapping?.let { Features(priority = it.priority != null, projects = it.project != null, notion = true) } ?: Features()
     }.distinctUntilChanged()
 
     override val syncStatus: Flow<SyncStatus> = combine(
@@ -106,6 +106,15 @@ class LocalTaskRepository(
 
     override fun refreshProjects() {
         scope.launch { sync.pullProjects() }
+    }
+
+    override suspend fun syncNow(from: LocalDate, to: LocalDate) {
+        // In the app's scope, so leaving the screen can't cut a request off halfway.
+        scope.launch {
+            if (sync.push() != NotionSync.Outcome.Done) return@launch
+            sync.pull(from, to)
+            sync.pullProjects()
+        }.join()
     }
 
     override fun retryFailedChanges() {

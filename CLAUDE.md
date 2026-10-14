@@ -28,6 +28,16 @@ Tasks:
 - **Stroke weights:** use the widths in DESIGN.md and the HTML (1.6 dp circles, and so on). The PNGs draw them thinner only because their renderer rounded fractional borders down to 1 px.
 - **App id** `app.stillnote`, **minSdk** 26.
 
+Widget:
+
+- **One resizable widget**, 2×2 when placed. When it is at least half again as wide as it is tall it draws the 4×2 note.
+- **Small cells:** the note shrinks evenly to fit, but not below 75% of the mockup; shorter than that, it holds fewer rows. Some launchers also shrink the whole widget view to fit small grid cells (OnePlus lays a 2×2 out at 148 dp and shows it at about 110), so on those a 3×3 or 4×3 shows the full note at a readable size.
+- **Drawn as one image** with the app's fonts, shapes and shadows (RemoteViews can't show bundled fonts or tilt), so it follows the Typography setting and tilts the text with the note, as the PNGs do. Invisible tap areas with labels sit over it.
+- **Taps:** a row anywhere completes its task; "Today" and "+N more" open Today; "+" opens the new-task note, or leaves one alone that's already being written. The rest of the note does nothing.
+- **More than four tasks on the 4×2:** it shows three and "+N more", since four rows leave no room for the line.
+- **No open tasks:** the header keeps its count ("Today 0", "· 0 to do") and the note says "All clear." or "All clear for today." in the hand font at 20, centred below the header.
+- **Redraws** after a change in the app or on the widget, a background sync, a new font, and the midnight sync.
+
 Look:
 
 - **Palettes:** default colours only for now. The swatches in setup and Settings are drawn but do nothing, and Canary stays selected.
@@ -43,6 +53,7 @@ Notion:
 - **Fields:** guessed by name (English and Italian), then by type for the three required ones; Priority is also recognised by its options. A Project is only guessed by name. The ▾ opens a sheet of card with RadioRows, plus "Don't use" for Priority and Project.
 - **A database without Priority or Project:** the flag or project toggle is hidden in the note, and the Projects page says "This database has no project field."
 - **Sync states:** the header summary gains "syncing", "offline" or "couldn't sync" only when needed. A change Notion refuses shows a paper strip, "Couldn't save." with Retry. Setup shows its errors under the field in `inkHigh`.
+- **Pull to sync** (asked for by the user; not in the mockups): pulling Today, Calendar or Projects down sends the waiting changes, then pulls that screen's month and the projects. A paper disc with the refresh icon comes out under the header and spins until it's done. Without Notion, pulling does nothing.
 
 ## Build and run
 
@@ -53,15 +64,17 @@ Gradle needs `JAVA_HOME` (JDK 21) and `ANDROID_HOME`; neither is set globally on
 ./gradlew :app:testDebugUnitTest         # Notion client and property mapping, on the JVM
 ./gradlew :app:connectedDebugAndroidTest # the sync engine against real SQLite, on the emulator
 ./gradlew :app:lintDebug
-python3 tools/screens.py                 # screenshot the designed screens and compare with the mockups
+python3 tools/screens.py                 # screenshot the designed screens and the widget, and compare with the mockups
 python3 tools/notion_e2e.py              # drive the app against a fake Notion: connect, sync, offline, errors
 ```
 
-Both scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `screens.py` covers mockups 05 to 13 in demo mode; `notion_e2e.py` wipes the app's data and covers 01 to 04 and 14 against a fake Notion.
+Both scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `screens.py` covers mockups 05 to 13 in demo mode, compares the widget as the app draws it at the size of mockups 15 and 16, and puts the real widget on the home screen; `notion_e2e.py` wipes the app's data and covers 01 to 04 and 14 against a fake Notion.
 
 Debug builds take two launch extras, used by those scripts:
 
 - `--ez demo true` shows the mockups' sample tasks and projects with "today" fixed to Mon 12 Oct 2026, and skips the first-run flow.
 - `--es notion_url <url>` sends Notion calls to `tools/fake_notion.py` instead; it is remembered until given an empty value or the app's data is cleared.
+- `--ez render_widgets true` draws the widget's two mockup frames and the picker preview from the sample tasks into the app's `files/widgets/`. The preview is copied by hand to `res/drawable-nodpi/widget_preview.png`.
+- `--ez pin_widget true` asks the launcher to place the widget.
 
-How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock: the visible month by date, and every task that has a project. The token is encrypted with a Keystore key (`KeystoreTokenVault`).
+How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock: the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`).

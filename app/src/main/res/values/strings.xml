@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">StillNote</string>
+    <string name="widget_name">Today</string>
+    <string name="widget_description">Today\'s open tasks on a post-it. Tap one to tick it off.</string>
 </resources>

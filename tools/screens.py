@@ -3,7 +3,9 @@
 
     python3 tools/screens.py
 
-The first-run flow, Settings and the Notion states are covered by tools/notion_e2e.py.
+The first-run flow, Settings and the Notion states are covered by tools/notion_e2e.py. The widget's
+two mockups (15, 16) are drawn by the app itself at the mockups' own size and compared; then the
+real widget is put on the home screen and saved as m3-widget-home.png.
 
 Needs adb, Pillow, and the debug build installed on an emulator set to the mockup's page:
 
@@ -98,6 +100,31 @@ def back():
     time.sleep(0.8)
 
 
+def home():
+    adb("shell", "input", "keyevent", "KEYCODE_HOME")
+    time.sleep(1.5)
+
+
+def place_widget(*extras):
+    """Puts the widget on the home screen unless one is there already, and leaves the home screen showing.
+
+    [extras] go to the app's launch, which asks the launcher to pin the widget.
+    """
+    home()
+    if any(label.startswith("Today, ") for label, _ in nodes()):
+        return
+    launch(*extras, "--ez", "pin_widget", "true")
+    wait_for_label("Add to home screen")
+    tap("Add to home screen")
+    home()
+
+
+def pull(path, name):
+    """Copies [path] out of the app's private files to screenshots/[name]."""
+    with open(os.path.join(OUT, name), "wb") as file:
+        file.write(adb("exec-out", "run-as", APP, "cat", path, binary=True))
+
+
 def shot(name):
     time.sleep(0.8)
     top = status_bar()
@@ -115,13 +142,26 @@ def compare(name, mockup=None):
     """
     mockup = Image.open(os.path.join(MOCKUPS, (mockup or name) + ".png")).convert("RGB")
     app = Image.open(os.path.join(OUT, name + ".png")).convert("RGB")
+    width, height = mockup.size
     difference = ImageChops.difference(mockup, app).convert("L")
-    sheet = Image.new("RGB", (PAGE[0] * 3 + 20, PAGE[1]), "white")
+    sheet = Image.new("RGB", (width * 3 + 20, height), "white")
     sheet.paste(mockup, (0, 0))
-    sheet.paste(app, (PAGE[0] + 10, 0))
-    sheet.paste(difference.point(lambda v: 255 - min(255, v * 3)).convert("RGB"), (PAGE[0] * 2 + 20, 0))
+    sheet.paste(app, (width + 10, 0))
+    sheet.paste(difference.point(lambda v: 255 - min(255, v * 3)).convert("RGB"), (width * 2 + 20, 0))
     sheet.save(os.path.join(OUT, "compare", name + ".png"))
-    return sum(difference.point(lambda v: 255 if v > 40 else 0).histogram()[255:]) / (PAGE[0] * PAGE[1])
+    return sum(difference.point(lambda v: 255 if v > 40 else 0).histogram()[255:]) / (width * height)
+
+
+def widgets():
+    """The widget's two mockup frames as the app draws them, then the real widget on the home screen."""
+    launch("--ez", "demo", "true", "--ez", "render_widgets", "true")
+    for name in ("15-widget-2x2", "16-widget-4x2"):
+        pull(f"files/widgets/{name}.png", name + ".png")
+        print(f"{name}: {compare(name):.1%} of pixels differ")
+    place_widget("--ez", "demo", "true")
+    wait_for_label("Today, 4 to do")
+    with open(os.path.join(OUT, "m3-widget-home.png"), "wb") as file:
+        file.write(adb("exec-out", "screencap", "-p", binary=True))
 
 
 def main():
@@ -178,6 +218,8 @@ def main():
     for name in ("05-today", "06-new-task", "07-new-task-date-time", "08-new-task-priority", "09-calendar",
                  "10-projects", "11-projects-add-menu", "12-new-task-project", "13-new-project"):
         print(f"{name}: {compare(name):.1%} of pixels differ")
+
+    widgets()
 
 
 if __name__ == "__main__":

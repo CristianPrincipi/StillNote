@@ -32,8 +32,11 @@ data class TaskDraft(
 /** A project and what its card shows: the tasks still open, and how many are done. */
 data class Project(val name: String, val open: List<Task>, val done: Int)
 
-/** What the connected database can hold. Without Notion, everything is on. */
-data class Features(val priority: Boolean = true, val projects: Boolean = true)
+/**
+ * What the connected database can hold. Without Notion, everything is on.
+ * [notion] is true while a database is connected, which is what makes pulling down sync.
+ */
+data class Features(val priority: Boolean = true, val projects: Boolean = true, val notion: Boolean = false)
 
 object TaskOrder {
     /** Time ascending with untimed tasks last, then High to None. */
@@ -43,6 +46,11 @@ object TaskOrder {
 
     /** Done tasks first, then the Today order. */
     val calendarDay: Comparator<Task> = compareByDescending<Task> { it.done }.then(today)
+
+    /** The widget's order: High to None, then by time with untimed tasks last. */
+    val widget: Comparator<Task> = compareBy<Task> { it.priority.ordinal }
+        .thenBy { it.time == null }
+        .thenBy { it.time ?: LocalTime.MIN }
 
     /** Soonest date first with undated tasks last, then High to None. */
     val project: Comparator<Task> = compareBy<Task> { it.date == null }

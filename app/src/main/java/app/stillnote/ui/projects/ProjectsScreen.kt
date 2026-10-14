@@ -50,6 +50,7 @@ import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.Overline
 import app.stillnote.ui.components.PaperPage
+import app.stillnote.ui.components.PullToSync
 import app.stillnote.ui.components.ScreenTitle
 import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
@@ -82,6 +83,7 @@ fun ProjectsScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val cards = rememberLazyListState()
     LaunchedEffect(Unit) { viewModel.refresh() }
 
@@ -95,10 +97,12 @@ fun ProjectsScreen(
                 ScreenTitle("Projects")
                 MonoText(state.sync.after("${count(state.projects.size, "project")} · ${count(state.openNotes, "open note")}"), 12f)
             }
-            when {
-                !state.features.projects -> Hint("This database has no project field.")
-                state.loaded && state.projects.isEmpty() -> Hint("No projects yet.")
-                else -> ProjectCards(state.projects, cards, viewModel::complete, Modifier.weight(1f))
+            PullToSync(syncing, state.features.notion, viewModel::syncNow, Modifier.weight(1f)) {
+                when {
+                    !state.features.projects -> Hint("This database has no project field.")
+                    state.loaded && state.projects.isEmpty() -> Hint("No projects yet.")
+                    else -> ProjectCards(state.projects, cards, viewModel::complete, Modifier.fillMaxSize())
+                }
             }
         }
         if (!state.features.projects) return@Box
@@ -154,7 +158,14 @@ private fun count(n: Int, noun: String) = if (n == 1) "1 $noun" else "$n ${noun}
 
 @Composable
 private fun Hint(text: String) {
-    HandText(text, 18f, Modifier.padding(horizontal = 24.dp, vertical = 30.dp), color = StillColors.ink3)
+    // Scrolls only so that it can be pulled down to sync.
+    Box(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        HandText(text, 18f, Modifier.padding(horizontal = 24.dp, vertical = 30.dp), color = StillColors.ink3)
+    }
 }
 
 @Composable

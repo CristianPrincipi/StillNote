@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.Paint
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -17,7 +16,9 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import app.stillnote.ui.theme.StillColors
@@ -91,13 +92,18 @@ object Shadows {
  * reliable on hardware canvases before API 28.
  */
 fun Modifier.paperShadow(shape: Shape, shadows: List<PaperShadow>): Modifier = drawWithCache {
-    val layers = shadows.map { shadowLayer(it, shape) }
+    val layers = shadows.map { shadowLayer(it, shape, size, layoutDirection) }
     onDrawBehind {
         for (i in layers.indices.reversed()) layers[i]()
     }
 }
 
-private fun CacheDrawScope.shadowLayer(shadow: PaperShadow, shape: Shape): DrawScope.() -> Unit {
+/** Draws [shadows] for a [shape] of [size] at the origin, for drawing outside a layout (the widget). */
+fun DrawScope.drawPaperShadow(shape: Shape, shadows: List<PaperShadow>, size: Size) {
+    for (layer in shadows.reversed()) shadowLayer(layer, shape, size, layoutDirection)()
+}
+
+private fun Density.shadowLayer(shadow: PaperShadow, shape: Shape, size: Size, layoutDirection: LayoutDirection): DrawScope.() -> Unit {
     val spread = shadow.spread.toPx()
     val width = size.width + 2 * spread
     val height = size.height + 2 * spread
