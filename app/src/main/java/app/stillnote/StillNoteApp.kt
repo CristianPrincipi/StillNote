@@ -19,12 +19,15 @@ import app.stillnote.data.notion.NotionAccount
 import app.stillnote.data.notion.NotionClient
 import app.stillnote.data.notion.NotionSync
 import app.stillnote.data.notion.PreferencesDatabaseStore
+import app.stillnote.data.notion.PullWorker
 import app.stillnote.data.notion.PushWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.YearMonth
@@ -64,10 +67,12 @@ class StillNoteApp : Application() {
             scope = scope,
             schedulePush = { PushWorker.schedule(this) },
         )
+        scope.launch { database.tasks().purgeTrashed(before = System.currentTimeMillis()) }
         scope.launch {
-            database.tasks().purgeTrashed(before = System.currentTimeMillis())
-            // Catch up as soon as the network comes back.
-            connectivity.online.drop(1).filter { it }.collect { syncNow() }
+            // Pull in the background only while a database is connected.
+            account.database.map { it != null }.distinctUntilChanged().collect { connected ->
+                if (connected) PullWorker.start(this@StillNoteApp) else PullWorker.stop(this@StillNoteApp)
+            }
         }
     }
 
@@ -76,6 +81,22 @@ class StillNoteApp : Application() {
         PushWorker.schedule(this)
         refreshThisMonth()
         tasks.refreshProjects()
+    }
+
+    /**
+     * Syncs each time the network comes back, for as long as the caller runs. Only while the app
+     * is on screen: with it closed the workers wait for the network themselves, and a worker
+     * starting the app would otherwise set off a second sync as its network appears.
+     */
+    suspend fun syncWhenBackOnline() {
+        connectivity.online.drop(1).filter { it }.collect { syncNow() }
+    }
+
+    /** What [PullWorker] does with the app closed: the same as [syncNow], and returns when it's over. */
+    suspend fun syncInBackground() {
+        clock.refresh()
+        val month = YearMonth.from(clock.today.value)
+        tasks.syncNow(month.atDay(1), month.atEndOfMonth())
     }
 
     /** Pulls the month around today, which covers Today and the Calendar's first page. */

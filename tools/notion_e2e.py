@@ -5,11 +5,13 @@
 
 It wipes the app's data first, then walks through: the first-run flow against the mockups'
 five databases, then a fresh install used without Notion, connected from Settings, synced both
-ways (tasks and projects), used offline, a refused change and its Retry, and disconnected.
+ways (tasks and projects, by pulling down, and in the background with the app closed), used
+offline, a refused change and its Retry, and disconnected.
 Screenshots go to screenshots/: the designed screens under their mockup's name, the rest as
 m2-*.png. The emulator needs the display described in tools/screens.py.
 """
 import os
+import re
 import sys
 import time
 from datetime import date, timedelta
@@ -53,6 +55,21 @@ def clear_field():
     adb("shell", "input", "keyevent", "123")  # move to the end
     adb("shell", "input", "keyevent", *["67"] * 60)  # then delete backwards
     time.sleep(0.5)
+
+
+def pull_down():
+    """Drags the page down from below its header, slowly enough not to fling."""
+    adb("shell", "input", "swipe", "390", "700", "390", "1300", "500")
+
+
+def run_scheduled_work():
+    """Runs the app's WorkManager jobs now, as if their time had come. Returns how many there were."""
+    dump = adb("shell", "dumpsys", "jobscheduler")
+    # Lines such as "androidx.work.systemjobscheduler:u0a190/3 #...#@androidx.work.systemjobscheduler@app.stillnote/androidx.work..."
+    jobs = set(re.findall(r"([\w.]+):u\d+a\d+/(\d+) #\S*@" + re.escape(APP) + r"/androidx\.work", dump))
+    for namespace, job in sorted(jobs):
+        adb("shell", "cmd", "jobscheduler", "run", "-f", "-n", namespace, APP, job)
+    return len(jobs)
 
 
 def airplane(on):
@@ -170,7 +187,9 @@ def without_notion_then_connected():
         tap("Save task")
         expect(on_screen("Mark Water the tomatoes as done"), "and the task lands on the Balcony card")
         expect(on_screen("1 open · 0 done"), "which counts it")
-        expect(not notion.requests, "nothing was sent anywhere")
+        pull_down()
+        time.sleep(1)
+        expect(not notion.requests, "nothing was sent anywhere, even after pulling down")
         tap("TASKS")
 
         print("Connecting from Settings")
@@ -211,6 +230,30 @@ def without_notion_then_connected():
         expect(wait_for(lambda: task("Weekly review in Notion")["in_trash"]), "deleting moves the page to the trash")
         tap("Undo")
         expect(wait_for(lambda: not task("Weekly review in Notion")["in_trash"]), "and Undo brings it back")
+        notion.add_task("Pulled from Notion", today, "20:00")
+        pull_down()
+        expect(on_screen("Pulled from Notion"), "pulling Today down brings in a task just added in Notion")
+
+        print("With the app closed")
+        adb("shell", "input", "keyevent", "KEYCODE_HOME")
+        time.sleep(1)
+        adb("shell", "am", "kill", APP)
+        notion.add_task("Added while away", today, "19:00")
+        asked = len(notion.requests)
+        jobs = run_scheduled_work()
+        expect(wait_for(lambda: any(path.endswith("/query") for _, path, _ in notion.requests[asked:]), 30),
+               f"the background sync asks Notion while the app is closed ({jobs} jobs run)")
+        time.sleep(2)
+        # With Notion refusing everything, only the background sync can have brought the task in.
+        notion.fail, notion.fail_status = "all", 400
+        launch()
+        expect(on_screen("Added while away"), "and the task it brought in is on Today when the app opens")
+        notion.fail = None
+        with notion.lock:
+            notion.pages[task("Added while away")["id"]]["in_trash"] = True
+        pull_down()
+        expect(wait_for(lambda: "Added while away" not in labels(), 20), "a page trashed in Notion leaves the phone on the next pull")
+        expect(wait_for(lambda: not any("couldn't sync" in label for label in labels()), 20), "and the header is clear again")
 
         print("Projects")
         tap("PROJECTS")

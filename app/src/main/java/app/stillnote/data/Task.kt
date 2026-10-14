@@ -32,8 +32,11 @@ data class TaskDraft(
 /** A project and what its card shows: the tasks still open, and how many are done. */
 data class Project(val name: String, val open: List<Task>, val done: Int)
 
-/** What the connected database can hold. Without Notion, everything is on. */
-data class Features(val priority: Boolean = true, val projects: Boolean = true)
+/**
+ * What the connected database can hold. Without Notion, everything is on.
+ * [notion] is true while a database is connected, which is what makes pulling down sync.
+ */
+data class Features(val priority: Boolean = true, val projects: Boolean = true, val notion: Boolean = false)
 
 object TaskOrder {
     /** Time ascending with untimed tasks last, then High to None. */

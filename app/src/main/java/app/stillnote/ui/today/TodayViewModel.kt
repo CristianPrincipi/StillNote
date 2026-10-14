@@ -7,6 +7,7 @@ import app.stillnote.data.SyncStatus
 import app.stillnote.data.Task
 import app.stillnote.data.TaskOrder
 import app.stillnote.data.TaskRepository
+import app.stillnote.ui.SyncOnPull
 import app.stillnote.ui.calm
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 
 data class TodayUiState(
     val date: LocalDate,
@@ -27,15 +29,16 @@ data class TodayUiState(
     val done: List<Task> = emptyList(),
     val loaded: Boolean = false,
     val sync: SyncStatus = SyncStatus.Idle,
+    val canSync: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TodayViewModel(private val tasks: TaskRepository, clock: AppClock) : ViewModel() {
+class TodayViewModel(private val tasks: TaskRepository, private val clock: AppClock) : ViewModel() {
     val state: StateFlow<TodayUiState> = clock.today
         .flatMapLatest { date ->
-            combine(tasks.observeTasks(date, date), tasks.syncStatus.calm()) { all, sync ->
+            combine(tasks.observeTasks(date, date), tasks.syncStatus.calm(), tasks.features) { all, sync, features ->
                 val (done, open) = all.sortedWith(TaskOrder.today).partition { it.done }
-                TodayUiState(date, open, done, loaded = true, sync = sync)
+                TodayUiState(date, open, done, loaded = true, sync = sync, canSync = features.notion)
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(clock.today.value))
@@ -71,6 +74,15 @@ class TodayViewModel(private val tasks: TaskRepository, clock: AppClock) : ViewM
     }
 
     fun retrySaving() = tasks.retryFailedChanges()
+
+    /** Pulls the month around today, the same as the periodic refresh. */
+    private val pull = SyncOnPull(viewModelScope) {
+        val month = YearMonth.from(clock.today.value)
+        tasks.syncNow(month.atDay(1), month.atEndOfMonth())
+    }
+    val syncing: StateFlow<Boolean> = pull.running
+
+    fun syncNow() = pull.start()
 
     private companion object {
         const val UNDO_MILLIS = 5_000L

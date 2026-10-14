@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         // While the app is on screen, keep "today" right and pick up changes made in Notion.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { app.syncWhenBackOnline() }
                 app.clock.refresh()
                 app.syncNow()
                 while (true) {

@@ -35,6 +35,7 @@ import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.Overline
 import app.stillnote.ui.components.PaperPage
+import app.stillnote.ui.components.PullToSync
 import app.stillnote.ui.components.ScreenTitle
 import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StayAtTop
@@ -65,11 +66,14 @@ fun TodayScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
     val couldNotSave by viewModel.couldNotSave.collectAsStateWithLifecycle()
+    val syncing by viewModel.syncing.collectAsStateWithLifecycle()
 
     Box(modifier.fillMaxSize()) {
         PaperPage {
             TodayHeader(state, onOpenSettings)
-            TaskList(state, viewModel, Modifier.weight(1f))
+            PullToSync(syncing, state.canSync, viewModel::syncNow, Modifier.weight(1f)) {
+                TaskList(state, viewModel, Modifier.fillMaxSize())
+            }
         }
         val strip = Modifier
             .align(Alignment.BottomStart)

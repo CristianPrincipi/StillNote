@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -44,6 +45,7 @@ import app.stillnote.ui.components.HandText
 import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.PaperPage
+import app.stillnote.ui.components.PullToSync
 import app.stillnote.ui.components.ScreenTitle
 import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
@@ -64,17 +66,20 @@ import java.util.Locale
 @Composable
 fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     PaperPage(modifier) {
         CalendarHeader(state, viewModel::previousMonth, viewModel::nextMonth)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            MonthGrid(state, viewModel::select)
-            SelectedDay(state)
+        PullToSync(syncing, state.canSync, viewModel::syncNow, Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                MonthGrid(state, viewModel::select)
+                SelectedDay(state)
+            }
         }
     }
 }

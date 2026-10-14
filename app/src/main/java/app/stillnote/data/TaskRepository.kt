@@ -45,5 +45,11 @@ interface TaskRepository {
     /** Asks for the current projects and their tasks, whatever their dates. */
     fun refreshProjects()
 
+    /**
+     * Sends every waiting change now, then pulls the tasks dated [from] to [to] and the projects.
+     * Returns when that is over, however it went; [syncStatus] tells how.
+     */
+    suspend fun syncNow(from: LocalDate, to: LocalDate)
+
     fun retryFailedChanges()
 }

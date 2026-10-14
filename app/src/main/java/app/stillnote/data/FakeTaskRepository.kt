@@ -1,5 +1,6 @@
 package app.stillnote.data
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -62,13 +63,21 @@ class FakeTaskRepository : TaskRepository {
         if (name.isNotBlank()) projects.update { it + Project(name.trim(), emptyList(), 0) }
     }
 
-    override val features: Flow<Features> = flowOf(Features())
+    override val features: Flow<Features> = flowOf(Features(notion = true))
     override fun refreshProjects() = Unit
 
     override val syncStatus: Flow<SyncStatus> = flowOf(SyncStatus.Idle)
     override val hasFailedChanges: Flow<Boolean> = flowOf(false)
     override fun refresh(from: LocalDate, to: LocalDate) = Unit
+
+    /** Nothing to sync; the pause lets pull-to-refresh be seen in demo mode. */
+    override suspend fun syncNow(from: LocalDate, to: LocalDate) = delay(DEMO_SYNC_MILLIS)
+
     override fun retryFailedChanges() = Unit
+
+    private companion object {
+        const val DEMO_SYNC_MILLIS = 1_200L
+    }
 }
 
 internal object FakeData {

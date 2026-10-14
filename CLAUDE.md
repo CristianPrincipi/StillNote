@@ -43,6 +43,7 @@ Notion:
 - **Fields:** guessed by name (English and Italian), then by type for the three required ones; Priority is also recognised by its options. A Project is only guessed by name. The ▾ opens a sheet of card with RadioRows, plus "Don't use" for Priority and Project.
 - **A database without Priority or Project:** the flag or project toggle is hidden in the note, and the Projects page says "This database has no project field."
 - **Sync states:** the header summary gains "syncing", "offline" or "couldn't sync" only when needed. A change Notion refuses shows a paper strip, "Couldn't save." with Retry. Setup shows its errors under the field in `inkHigh`.
+- **Pull to sync** (asked for by the user; not in the mockups): pulling Today, Calendar or Projects down sends the waiting changes, then pulls that screen's month and the projects. A paper disc with the refresh icon comes out under the header and spins until it's done. Without Notion, pulling does nothing.
 
 ## Build and run
 
@@ -64,4 +65,4 @@ Debug builds take two launch extras, used by those scripts:
 - `--ez demo true` shows the mockups' sample tasks and projects with "today" fixed to Mon 12 Oct 2026, and skips the first-run flow.
 - `--es notion_url <url>` sends Notion calls to `tools/fake_notion.py` instead; it is remembered until given an empty value or the app's data is cleared.
 
-How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock: the visible month by date, and every task that has a project. The token is encrypted with a Keystore key (`KeystoreTokenVault`).
+How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock: the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`).
