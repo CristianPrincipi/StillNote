@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val app = application as StillNoteApp
         if (BuildConfig.DEBUG) {
-            // adb shell am start -n app.stillnote/.MainActivity --ez demo true --es notion_url http://127.0.0.1:8787
+            // adb shell am start -n app.stillnote.debug/app.stillnote.MainActivity --ez demo true --es notion_url http://127.0.0.1:8787
             intent.getStringExtra("notion_url")?.let(app::setDebugNotionUrl)
             if (intent.getBooleanExtra("demo", false)) app.enterDemo()
             if (intent.getBooleanExtra("render_widgets", false)) app.renderWidgetMockups(File(filesDir, "widgets"))

@@ -28,7 +28,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MOCKUPS = os.path.join(ROOT, "design/screens/png")
 OUT = os.path.join(ROOT, "screenshots")
 ADB = os.path.join(os.environ.get("ANDROID_HOME", os.path.expanduser("~/Android/Sdk")), "platform-tools/adb")
-APP = "app.stillnote"
+APP = "app.stillnote.debug"  # the debug build's id; its classes stay in app.stillnote
 PAGE = (780, 1688)
 
 
@@ -75,7 +75,7 @@ def close_sheet():
 def launch(*extras):
     """Restarts the app. Debug builds accept `--ez demo true` and `--es notion_url <url>`."""
     adb("shell", "am", "force-stop", APP)
-    adb("shell", "am", "start", "-n", APP + "/.MainActivity", *extras)
+    adb("shell", "am", "start", "-n", APP + "/app.stillnote.MainActivity", *extras)
     time.sleep(4)
 
 
