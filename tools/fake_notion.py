@@ -7,7 +7,7 @@ A debug build talks to it once the port is forwarded and the app is started with
 `notion_url` extra, which it remembers until it is given an empty one:
 
     adb reverse tcp:8787 tcp:8787
-    adb shell am start -n app.stillnote/.MainActivity --es notion_url http://127.0.0.1:8787
+    adb shell am start -n app.stillnote.debug/app.stillnote.MainActivity --es notion_url http://127.0.0.1:8787
 
 Any token works except one starting with "bad", which gets a 401. It implements only what the
 app calls, in API version 2026-03-11: users/me, search, retrieve and query a data source, and

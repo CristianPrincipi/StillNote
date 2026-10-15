@@ -26,7 +26,7 @@ Tasks:
 - **Order within a Calendar day:** done tasks first, then the Today order. This applies to the day's squares and to the day panel.
 - **No design yet, so no action:** tapping a post-it's body, or a project card's header.
 - **Stroke weights:** use the widths in DESIGN.md and the HTML (1.6 dp circles, and so on). The PNGs draw them thinner only because their renderer rounded fractional borders down to 1 px.
-- **App id** `app.stillnote`, **minSdk** 26.
+- **App id** `app.stillnote`, **minSdk** 26. Debug builds are `app.stillnote.debug`, labelled "StillNote debug", so they install next to the release build; their classes stay in `app.stillnote`.
 
 Widget:
 
@@ -61,6 +61,7 @@ Gradle needs `JAVA_HOME` (JDK 21) and `ANDROID_HOME`; neither is set globally on
 
 ```sh
 ./gradlew :app:installDebug              # build and install on the running emulator or phone
+./gradlew :app:assembleRelease           # the signed release APK, shrunk by R8
 ./gradlew :app:testDebugUnitTest         # Notion client and property mapping, on the JVM
 ./gradlew :app:connectedDebugAndroidTest # the sync engine against real SQLite, on the emulator
 ./gradlew :app:lintDebug
@@ -70,7 +71,9 @@ python3 tools/notion_e2e.py              # drive the app against a fake Notion: 
 
 Both scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `screens.py` covers mockups 05 to 13 in demo mode, compares the widget as the app draws it at the size of mockups 15 and 16, and puts the real widget on the home screen; `notion_e2e.py` wipes the app's data and covers 01 to 04 and 14 against a fake Notion.
 
-Debug builds take two launch extras, used by those scripts:
+Release builds are signed from `keystore.properties` at the repo root (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`), which git ignores; without it the APK is built unsigned. On the dev machine the key is `~/.android/stillnote-release.jks`. Keep both backed up: a release build signed with another key can't update the installed app. The launch extras below don't exist in release builds, so check a release build by hand, and look at logcat for what R8 removed: anything made by reflection (Glance callbacks, workers) needs a rule in `app/proguard-rules.pro` unless its library ships one.
+
+Debug builds take these launch extras, used by those scripts. Name the activity in full, since the package and the classes differ: `adb shell am start -n app.stillnote.debug/app.stillnote.MainActivity --ez demo true`.
 
 - `--ez demo true` shows the mockups' sample tasks and projects with "today" fixed to Mon 12 Oct 2026, and skips the first-run flow.
 - `--es notion_url <url>` sends Notion calls to `tools/fake_notion.py` instead; it is remembered until given an empty value or the app's data is cleared.

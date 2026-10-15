@@ -65,7 +65,7 @@ def pull_down():
 def run_scheduled_work():
     """Runs the app's WorkManager jobs now, as if their time had come. Returns how many there were."""
     dump = adb("shell", "dumpsys", "jobscheduler")
-    # Lines such as "androidx.work.systemjobscheduler:u0a190/3 #...#@androidx.work.systemjobscheduler@app.stillnote/androidx.work..."
+    # Lines such as "androidx.work.systemjobscheduler:u0a190/3 #...#@androidx.work.systemjobscheduler@app.stillnote.debug/androidx.work..."
     jobs = set(re.findall(r"([\w.]+):u\d+a\d+/(\d+) #\S*@" + re.escape(APP) + r"/androidx\.work", dump))
     for namespace, job in sorted(jobs):
         adb("shell", "cmd", "jobscheduler", "run", "-f", "-n", namespace, APP, job)
