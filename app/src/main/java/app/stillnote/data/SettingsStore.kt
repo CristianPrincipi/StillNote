@@ -3,6 +3,7 @@ package app.stillnote.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -15,11 +16,24 @@ enum class HandFont(val key: String) {
     Bookish("book"),
 }
 
+/**
+ * Settings → Reminders: [before] is how many minutes before a task's time to remind, or
+ * [Reminder.None]; [morningAt] is the morning list's time in minutes after midnight, or null for off.
+ */
+data class ReminderSettings(val before: Int = Reminder.DEFAULT, val morningAt: Int? = MORNING_DEFAULT) {
+    companion object {
+        const val MORNING_DEFAULT = 8 * 60
+    }
+}
+
 private val Context.settingsDataStore by preferencesDataStore("settings")
 
 class SettingsStore(private val context: Context) {
     private val handFontKey = stringPreferencesKey("hand_font")
     private val setupDoneKey = booleanPreferencesKey("setup_done")
+    private val reminderBeforeKey = intPreferencesKey("reminder_before")
+    private val morningListKey = intPreferencesKey("morning_list_at")
+    private val notificationsAskedKey = booleanPreferencesKey("notifications_asked")
 
     val handFont: Flow<HandFont> = context.settingsDataStore.data.map { prefs ->
         HandFont.entries.firstOrNull { it.key == prefs[handFontKey] } ?: HandFont.Handwritten
@@ -34,5 +48,28 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setSetupDone() {
         context.settingsDataStore.edit { it[setupDoneKey] = true }
+    }
+
+    val reminders: Flow<ReminderSettings> = context.settingsDataStore.data.map { prefs ->
+        ReminderSettings(
+            before = prefs[reminderBeforeKey] ?: Reminder.DEFAULT,
+            // Stored as -1 for off, since a missing key means the default.
+            morningAt = (prefs[morningListKey] ?: ReminderSettings.MORNING_DEFAULT).takeIf { it >= 0 },
+        )
+    }
+
+    suspend fun setReminderBefore(minutes: Int) {
+        context.settingsDataStore.edit { it[reminderBeforeKey] = minutes }
+    }
+
+    suspend fun setMorningList(at: Int?) {
+        context.settingsDataStore.edit { it[morningListKey] = at ?: -1 }
+    }
+
+    /** True once the app has asked Android for permission to notify, so it asks by itself only once. */
+    val notificationsAsked: Flow<Boolean> = context.settingsDataStore.data.map { it[notificationsAskedKey] == true }
+
+    suspend fun setNotificationsAsked() {
+        context.settingsDataStore.edit { it[notificationsAskedKey] = true }
     }
 }

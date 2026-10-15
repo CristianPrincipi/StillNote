@@ -30,14 +30,30 @@ abstract class TaskDao {
     @Query("UPDATE tasks SET trashed = :trashed, dirty = 1, failed = 0, rev = rev + 1, changedAt = :now WHERE id = :id")
     abstract suspend fun setTrashed(id: String, trashed: Boolean, now: Long)
 
+    // An edit can move the task's time, so it drops a snooze that was for the old one.
     @Query(
         "UPDATE tasks SET title = :title, date = :date, minutes = :minutes, priority = :priority, project = :project, " +
-            "edited = 1, dirty = 1, failed = 0, rev = rev + 1, changedAt = :now WHERE id = :id"
+            "snoozedUntil = 0, edited = 1, dirty = 1, failed = 0, rev = rev + 1, changedAt = :now WHERE id = :id"
     )
     abstract suspend fun edit(id: String, title: String, date: String?, minutes: Int?, priority: String, project: String?, now: Long)
 
     @Query("SELECT * FROM tasks WHERE id = :id AND trashed = 0")
     abstract suspend fun byId(id: String): TaskRow?
+
+    // Reminders. They stay on the phone, so changing one leaves the row clean.
+
+    @Query("UPDATE tasks SET reminder = :reminder WHERE id = :id")
+    abstract suspend fun setReminder(id: String, reminder: Int?)
+
+    @Query("UPDATE tasks SET snoozedUntil = :until WHERE id = :id")
+    abstract suspend fun snooze(id: String, until: Long)
+
+    /** The open dated tasks, which are all a reminder or the morning list can be about. */
+    @Query("SELECT * FROM tasks WHERE trashed = 0 AND done = 0 AND date IS NOT NULL")
+    abstract fun observeOpenDated(): Flow<List<TaskRow>>
+
+    @Query("SELECT * FROM tasks WHERE trashed = 0 AND done = 0 AND date IS NOT NULL")
+    abstract suspend fun openDated(): List<TaskRow>
 
     // Pushing to Notion. A deleted task that never reached Notion has nothing to push.
 

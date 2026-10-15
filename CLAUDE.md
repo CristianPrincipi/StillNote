@@ -22,13 +22,21 @@ These settle items DESIGN.md leaves open (§7), or say how something it doesn't 
 Tasks:
 
 - **New task:** priority is None, on a canary note until one is picked. The date is Today with no time. From Today the project is "No project".
-- **The clock** opens on "Any time", for a new task and for one with no time, so a task can go on another day without a time. From "Any time", › picks the next half hour and ‹ the one before it; after that each step is 30 minutes. A time can't be cleared once set.
+- **The clock** opens on "Any time", for a new task and for one with no time, so a task can go on another day without a time. From "Any time", › picks the next half hour and ‹ the one before it; after that each step is 30 minutes. A time can't be cleared once set. Once there is a time, a third stepper sets the task's reminder (see Reminders).
 - **Editing a task:** tapping a post-it (on Today or a project card), a Done row or a Calendar day row opens the new-task note filled in, headed "EDIT TASK", in the task's colour and without the keyboard. Its chips show what the task has: a day other than today, a time, a priority other than None, a project, or "No date" for an undated one. The day can't go back before today, or before the task's own day if that is earlier. Send saves the changes, and an unchanged note saves nothing. Ticking and deleting stay on the post-it.
 - **Order on Today:** time ascending with untimed tasks last, then High to None.
 - **Order within a Calendar day:** done tasks first, then the Today order. This applies to the day's squares and to the day panel.
 - **No design yet, so no action:** tapping a project card's header.
 - **Stroke weights:** use the widths in DESIGN.md and the HTML (1.6 dp circles, and so on). The PNGs draw them thinner only because their renderer rounded fractional borders down to 1 px.
 - **App id** `app.stillnote`, **minSdk** 26. Debug builds are `app.stillnote.debug`, labelled "StillNote debug", so they install next to the release build; their classes stay in `app.stillnote`.
+
+Reminders (asked for by the user; not in the design):
+
+- **Every open task with a time** reminds before it: Settings → Reminders offers Off, 5, 10, 15, 30 or 60 minutes as pills, 10 by default. A task can have its own in the clock picker's third stepper: the default, "No reminder", then 5 to 60 minutes before. The time chip names it when it isn't the default ("Today, 18:00 · 30 min before"). It stays on the phone, since Notion has no field for it.
+- **The notification** is Android's own: "Almost time: <task>", or "It's time: <task>" from the task's time on, over "10:30 · in 15 minutes · Work". Done ticks the task off; Later brings it back at the task's time, or 10 minutes on once that has passed; Edit, or a tap on it, opens the task in the note.
+- **The morning list:** one notification with today's open tasks that have no time, "Today: 3 tasks at any time", at a time set in Settings (Off, or 05:00 to 12:00 in half hours; 08:00 by default). Nothing on a day with none. A tap opens Today.
+- **Permission:** Android is asked once, right after the first saved task that will remind, or when a reminder is chosen in Settings. After that Settings says "Notifications are off for StillNote" with a link to Android's settings page.
+- **Timing:** one exact alarm on the next reminder, through `USE_EXACT_ALARM`, which Android grants without asking; fine while the app is installed by hand, but Play Store would want `SCHEDULE_EXACT_ALARM` instead. A task written after its reminder's time doesn't remind; a late reminder (the phone was off) still shows until 5 minutes after its task's time. A change made in Notion only reaches the reminders at the next sync. On the user's OnePlus 12, OxygenOS turns the exact alarm into an inexact one, even with battery use unrestricted: it can be late by up to three quarters of the time between setting it and its due time, an hour at most. The user chose to leave it for now; the ways out are stepping the alarm closer, or `setAlarmClock` with its status-bar icon.
 
 Widget:
 
@@ -64,14 +72,15 @@ Gradle needs `JAVA_HOME` (JDK 21) and `ANDROID_HOME`; neither is set globally on
 ```sh
 ./gradlew :app:installDebug              # build and install on the running emulator or phone
 ./gradlew :app:assembleRelease           # the signed release APK, shrunk by R8
-./gradlew :app:testDebugUnitTest         # Notion client and property mapping, on the JVM
+./gradlew :app:testDebugUnitTest         # Notion client, property mapping and reminder rules, on the JVM
 ./gradlew :app:connectedDebugAndroidTest # the sync engine against real SQLite, on the emulator
 ./gradlew :app:lintDebug
 python3 tools/screens.py                 # screenshot the designed screens and the widget, and compare with the mockups
 python3 tools/notion_e2e.py              # drive the app against a fake Notion: connect, sync, offline, errors
+python3 tools/reminders_e2e.py           # reminders and the morning list, moving the emulator's clock
 ```
 
-Both scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `screens.py` covers mockups 05 to 13 in demo mode, compares the widget as the app draws it at the size of mockups 15 and 16, and puts the real widget on the home screen; `notion_e2e.py` wipes the app's data and covers 01 to 04 and 14 against a fake Notion.
+The scripts expect the emulator display described in `tools/screens.py` (390×844 dp at 2×) and write to `screenshots/`, which git ignores. `screens.py` covers mockups 05 to 13 in demo mode, compares the widget as the app draws it at the size of mockups 15 and 16, and puts the real widget on the home screen; `notion_e2e.py` wipes the app's data and covers 01 to 04 and 14 against a fake Notion. `reminders_e2e.py` also wipes the app's data, and turns the emulator's automatic time off while it moves the clock; it turns it back on at the end. Mockup 07 now differs by the reminder stepper, which it doesn't draw.
 
 Release builds are signed from `keystore.properties` at the repo root (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`), which git ignores; without it the APK is built unsigned. On the dev machine the key is `~/.android/stillnote-release.jks`. Keep both backed up: a release build signed with another key can't update the installed app. The launch extras below don't exist in release builds, so check a release build by hand, and look at logcat for what R8 removed: anything made by reflection (Glance callbacks, workers) needs a rule in `app/proguard-rules.pro` unless its library ships one.
 
@@ -82,4 +91,4 @@ Debug builds take these launch extras, used by those scripts. Name the activity 
 - `--ez render_widgets true` draws the widget's two mockup frames and the picker preview from the sample tasks into the app's `files/widgets/`. The preview is copied by hand to `res/drawable-nodpi/widget_preview.png`.
 - `--ez pin_widget true` asks the launcher to place the widget.
 
-How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock. A push sends only the checkbox for a tick and every field after an edit (`TaskRow.edited`), so a tick can't undo something changed in Notion meanwhile. It pulls the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`). Each version of the database schema is saved in `app/schemas`: a change to `TaskRow` or `ProjectRow` needs a new version and a migration (an `AutoMigration` where Room can work it out), or the installed app can't open its data.
+How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock. A push sends only the checkbox for a tick and every field after an edit (`TaskRow.edited`), so a tick can't undo something changed in Notion meanwhile. It pulls the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`). Each version of the database schema is saved in `app/schemas`: a change to `TaskRow` or `ProjectRow` needs a new version and a migration (an `AutoMigration` where Room can work it out), or the installed app can't open its data. `Reminders` keeps one exact alarm on the next reminder or morning list: after every change to the tasks or Settings while the app runs, when the alarm goes off, and after a restart, an app update or a change of clock or time zone, it shows whatever has come due (remembering what it showed) and sets the alarm again. The rules are in `ReminderPlan`, which the JVM tests cover.

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -52,10 +51,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -69,12 +66,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.Priority
+import app.stillnote.data.Reminder
 import app.stillnote.ui.components.HandText
 import app.stillnote.ui.components.IconPaths
 import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.Overline
+import app.stillnote.ui.components.Pill
 import app.stillnote.ui.components.Shadows
+import app.stillnote.ui.components.Stepper
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
@@ -252,7 +252,7 @@ private fun Chips(draft: NewTaskDraft, modifier: Modifier = Modifier) {
     // Today at any time is the default, so it needs no chip.
     val day = when {
         draft.date == null -> "No date"
-        time != null -> "${draft.shortDay()}, ${time.format(TimeFormat)}"
+        time != null -> "${draft.shortDay()}, ${time.format(TimeFormat)}" + (draft.reminder?.let { " · " + reminderName(it).lowercase() } ?: "")
         draft.date != draft.today -> draft.shortDay()
         else -> null
     }
@@ -314,6 +314,7 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
         Stepper(
             onPrevious = { viewModel.shiftDay(-1) },
             previousLabel = "Previous day",
+            modifier = StepperPadding,
             previousEnabled = (draft.date ?: draft.today) > draft.earliest,
             onNext = { viewModel.shiftDay(1) },
             nextLabel = "Next day",
@@ -321,16 +322,11 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
             HandText(draft.dayName(), 28f, weight = FontWeight.Bold, lineHeight = 1.15f)
             MonoText((draft.date ?: draft.today).format(DayDateFormat).uppercase(), 11f, letterSpacing = 0.16.em)
         }
-        Box(
-            Modifier
-                .padding(start = 56.dp, end = 52.dp)
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(StillColors.ink.copy(alpha = 0.16f)),
-        )
+        StepperRule()
         Stepper(
             onPrevious = { viewModel.shiftTime(-1) },
             previousLabel = "30 minutes earlier",
+            modifier = StepperPadding,
             onNext = { viewModel.shiftTime(1) },
             nextLabel = "30 minutes later",
         ) {
@@ -346,46 +342,22 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
             // Blank under "Any time", but kept, so the note doesn't jump when a time is picked.
             MonoText(time?.let { partOfDay(it.hour).uppercase() } ?: " ", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
         }
-    }
-}
-
-/** `[‹] value [›]` */
-@Composable
-private fun Stepper(
-    onPrevious: () -> Unit,
-    previousLabel: String,
-    onNext: () -> Unit,
-    nextLabel: String,
-    previousEnabled: Boolean = true,
-    value: @Composable () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .padding(start = 20.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TapTarget(
-            onClick = onPrevious,
-            description = previousLabel,
-            modifier = Modifier
-                .size(TapSize)
-                .alpha(if (previousEnabled) 1f else 0.3f),
-            enabled = previousEnabled,
-        ) {
-            InkIcon(StillIcons.ChevronLeft, 22.dp, strokeWidth = 1.8f)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .semantics { liveRegion = LiveRegionMode.Polite },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            value()
-        }
-        TapTarget(onNext, nextLabel, Modifier.size(TapSize)) {
-            InkIcon(StillIcons.ChevronRight, 22.dp, strokeWidth = 1.8f)
+        // Only a task with a time can be reminded of.
+        if (draft.time != null) {
+            val default by viewModel.reminderDefault.collectAsStateWithLifecycle()
+            StepperRule()
+            Stepper(
+                onPrevious = { viewModel.shiftReminder(-1) },
+                previousLabel = "Previous reminder choice",
+                onNext = { viewModel.shiftReminder(1) },
+                nextLabel = "Next reminder choice",
+                modifier = StepperPadding,
+                previousEnabled = draft.reminder != ReminderSteps.first(),
+                nextEnabled = draft.reminder != ReminderSteps.last(),
+            ) {
+                HandText(reminderName(draft.reminder ?: default), 24f, weight = FontWeight.Bold, lineHeight = 1.15f)
+                MonoText(if (draft.reminder == null) "DEFAULT REMINDER" else "REMINDER", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
+            }
         }
     }
 }
@@ -451,39 +423,9 @@ private fun ProjectPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modi
         Overline("Project")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             projects.forEach { name ->
-                ProjectPill(name, selected = draft.projectPicked && draft.project == name) { viewModel.setProject(name) }
+                Pill(name, selected = draft.projectPicked && draft.project == name) { viewModel.setProject(name) }
             }
-            ProjectPill("No project", selected = draft.projectPicked && draft.project == null) { viewModel.setProject(null) }
-        }
-    }
-}
-
-@Composable
-private fun ProjectPill(name: String, selected: Boolean, onPick: () -> Unit) {
-    // The pill is 44 tall, as in the mockup; its 48 dp touch target overflows the row.
-    Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
-        Box(
-            modifier = Modifier
-                .requiredHeight(TapSize)
-                .selectable(
-                    selected = selected,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    role = Role.RadioButton,
-                    onClick = onPick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(44.dp)
-                    .background(if (selected) StillColors.ink else StillColors.card.copy(alpha = 0.45f), CircleShape)
-                    .border(1.4.dp, StillColors.ink, CircleShape)
-                    .padding(horizontal = 17.4.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                HandText(name, 18f, color = if (selected) StillColors.canary else StillColors.ink, lineHeight = 1f, maxLines = 1)
-            }
+            Pill("No project", selected = draft.projectPicked && draft.project == null) { viewModel.setProject(null) }
         }
     }
 }
@@ -554,6 +496,23 @@ private fun PickerToggle(icon: IconPaths, active: Boolean, label: String, onClic
         }
     }
 }
+
+private val StepperPadding = Modifier.padding(start = 20.dp, end = 16.dp)
+
+/** The faint line between the clock's steppers. */
+@Composable
+private fun StepperRule() {
+    Box(
+        Modifier
+            .padding(start = 56.dp, end = 52.dp)
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(StillColors.ink.copy(alpha = 0.16f)),
+    )
+}
+
+/** "No reminder" or "10 min before". */
+private fun reminderName(minutes: Int): String = if (minutes == Reminder.None) "No reminder" else "$minutes min before"
 
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val DayDateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)

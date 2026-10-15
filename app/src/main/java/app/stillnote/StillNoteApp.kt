@@ -1,6 +1,7 @@
 package app.stillnote
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -25,6 +26,7 @@ import app.stillnote.data.notion.NotionSync
 import app.stillnote.data.notion.PreferencesDatabaseStore
 import app.stillnote.data.notion.PullWorker
 import app.stillnote.data.notion.PushWorker
+import app.stillnote.reminders.Reminders
 import app.stillnote.widget.TodayWidget
 import app.stillnote.widget.WidgetKind
 import app.stillnote.widget.WidgetNote
@@ -68,6 +70,8 @@ class StillNoteApp : Application() {
         private set
     lateinit var tasks: TaskRepository
         private set
+    lateinit var reminders: Reminders
+        private set
 
     private var widgetWatch: Job? = null
 
@@ -82,6 +86,10 @@ class StillNoteApp : Application() {
             scope = scope,
             schedulePush = { PushWorker.schedule(this) },
         )
+        // Always the phone's own tasks, also in demo mode, which swaps [tasks] for the sample ones.
+        val stored = tasks
+        reminders = Reminders(this, database.tasks(), settings, complete = { stored.setDone(it, true) })
+        reminders.watch(scope)
         scope.launch { database.tasks().purgeTrashed(before = System.currentTimeMillis()) }
         scope.launch {
             // Pull in the background only while a database is connected.
@@ -110,6 +118,17 @@ class StillNoteApp : Application() {
     private fun watchWidget() {
         widgetWatch?.cancel()
         widgetWatch = scope.launch { widgetNotes().collect { TodayWidget().updateAll(this@StillNoteApp) } }
+    }
+
+    /** Runs [work] for a broadcast receiver, which Android keeps alive until [result] is finished. */
+    fun finishInBackground(result: BroadcastReceiver.PendingResult, work: suspend () -> Unit) {
+        scope.launch {
+            try {
+                work()
+            } finally {
+                result.finish()
+            }
+        }
     }
 
     /** Sends whatever is waiting, and pulls the month around today and the projects. */

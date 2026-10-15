@@ -248,6 +248,10 @@ def without_notion_then_connected():
         tap("Steady")  # a project whose card nothing below counts
         shot("m3-edit-task-synced")
         tap("Save changes")
+        # The first saved task with a time asks to allow notifications. Refused, so no reminder
+        # pops up over the screens for the rest of the run; tools/reminders_e2e.py allows them.
+        expect(on_screen("send you notifications"), "saving the first task with a time asks to allow notifications")
+        tap("Don’t allow")
         expect(on_screen("Pulled and renamed"), "the post-it shows the new title")
         expect(wait_for(lambda: (task("Pulled and renamed") or {}).get("priority") == "High"), "the change reaches Notion")
         changed = task("Pulled and renamed") or {}

@@ -18,7 +18,10 @@ private val CreationExtras.app: StillNoteApp get() = this[APPLICATION_KEY] as St
 /** Builds every ViewModel from the repositories held by [StillNoteApp]. */
 val StillViewModels: ViewModelProvider.Factory = viewModelFactory {
     initializer { TodayViewModel(app.tasks, app.clock) }
-    initializer { NewTaskViewModel(app.tasks, app.clock) }
+    initializer {
+        val app = app
+        NewTaskViewModel(app.tasks, app.clock, app.settings.reminders)
+    }
     initializer { CalendarViewModel(app.tasks, app.clock) }
     initializer { ProjectsViewModel(app.tasks, app.clock) }
     initializer {

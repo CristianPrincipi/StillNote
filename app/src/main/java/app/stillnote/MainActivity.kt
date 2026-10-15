@@ -14,15 +14,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import app.stillnote.ui.StillNoteRoot
 import app.stillnote.widget.TodayWidgetReceiver
-import app.stillnote.widget.WidgetRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
 class MainActivity : ComponentActivity() {
-    /** What a tap on the widget asked for, until the screens have shown it. */
-    private val widgetRequest = MutableStateFlow<WidgetRequest?>(null)
+    /** What a tap on the widget or a notification asked for, until the screens have shown it. */
+    private val launchRequest = MutableStateFlow<LaunchRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val app = application as StillNoteApp
@@ -34,11 +33,11 @@ class MainActivity : ComponentActivity() {
             if (intent.getBooleanExtra("pin_widget", false)) pinWidget()
         }
         // After a rotation the intent is the same old one, already handled.
-        if (savedInstanceState == null) widgetRequest.value = WidgetRequest.from(intent)
+        if (savedInstanceState == null) receive(intent)
         val bars = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
         enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
         super.onCreate(savedInstanceState)
-        setContent { StillNoteRoot(widgetRequest) }
+        setContent { StillNoteRoot(launchRequest) }
 
         // While the app is on screen, keep "today" right and pick up changes made in Notion.
         lifecycleScope.launch {
@@ -57,7 +56,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        WidgetRequest.from(intent)?.let { widgetRequest.value = it }
+        receive(intent)
+    }
+
+    /** Takes in a request. A reminder whose task is opened to edit has done its job, so it goes. */
+    private fun receive(intent: Intent) {
+        val request = LaunchRequest.from(intent) ?: return
+        if (request is LaunchRequest.EditTask) (application as StillNoteApp).reminders.notifications.cancel(request.taskId)
+        launchRequest.value = request
     }
 
     /** Debug builds only: asks the launcher to place the widget, for tools/screens.py. */

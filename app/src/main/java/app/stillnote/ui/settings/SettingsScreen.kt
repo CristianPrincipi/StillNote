@@ -1,9 +1,17 @@
 package app.stillnote.ui.settings
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -21,14 +29,21 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.HandFont
+import app.stillnote.data.Reminder
+import app.stillnote.reminders.notificationsAllowed
 import app.stillnote.ui.components.DoneMark
 import app.stillnote.ui.components.HandCircle
 import app.stillnote.ui.components.HandText
@@ -36,11 +51,13 @@ import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.Overline
 import app.stillnote.ui.components.PaperPage
+import app.stillnote.ui.components.Pill
 import app.stillnote.ui.components.TokenField
 import app.stillnote.ui.components.TextLink
 import app.stillnote.ui.components.RadioRow
 import app.stillnote.ui.components.PaletteSwatches
 import app.stillnote.ui.components.ScreenTitle
+import app.stillnote.ui.components.Stepper
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
@@ -76,6 +93,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onConnectNo
             NotionSection(viewModel, onConnectNotion)
             PaletteSection()
             TypographySection(handFont, viewModel::setHandFont)
+            RemindersSection(viewModel)
         }
     }
 }
@@ -176,3 +194,85 @@ private fun FontOption(font: HandFont, selected: Boolean, onPick: () -> Unit) {
         MonoText(font.label, 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.08.em)
     }
 }
+
+/**
+ * Not in the mockups. How long before a task's time to remind, as pills like the note's
+ * projects; the morning list's time on a stepper like the note's clock; and a way to let
+ * Android show them, while it won't.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RemindersSection(viewModel: SettingsViewModel) {
+    val rules = viewModel.reminders.collectAsStateWithLifecycle().value ?: return
+    val asked by viewModel.notificationsAsked.collectAsStateWithLifecycle(initialValue = true)
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(notificationsAllowed(context)) }
+    // Back from Android's settings page, the answer may have changed.
+    LifecycleResumeEffect(Unit) {
+        allowed = notificationsAllowed(context)
+        onPauseOrDispose {}
+    }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed = notificationsAllowed(context) }
+    val canAsk = Build.VERSION.SDK_INT >= 33 && !asked
+    fun ask() {
+        if (Build.VERSION.SDK_INT < 33) return
+        viewModel.markNotificationsAsked()
+        permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    // Choosing to be reminded is the moment to ask, the first time.
+    fun askIfNeeded() {
+        if (!allowed && canAsk) ask()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Overline("Reminders")
+        HandText("Before a task's time", 19f)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pill("Off", selected = rules.before == Reminder.None) { viewModel.setReminderBefore(Reminder.None) }
+            Reminder.choices.forEach { minutes ->
+                Pill("$minutes min", selected = rules.before == minutes) {
+                    viewModel.setReminderBefore(minutes)
+                    askIfNeeded()
+                }
+            }
+        }
+        HandText("Morning list", 19f, Modifier.padding(top = 12.dp))
+        MonoText("Today's tasks with no time, in one notification.", 11.5f, lineHeight = 1.55f)
+        val step = MorningSteps.indexOf(rules.morningAt).coerceAtLeast(0)
+        Stepper(
+            onPrevious = { viewModel.setMorningList(MorningSteps[step - 1]) },
+            previousLabel = "Earlier",
+            onNext = {
+                viewModel.setMorningList(MorningSteps[step + 1])
+                askIfNeeded()
+            },
+            nextLabel = "Later",
+            previousEnabled = step > 0,
+            nextEnabled = step < MorningSteps.lastIndex,
+        ) {
+            val at = rules.morningAt
+            MonoText(
+                at?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "Off",
+                30f,
+                weight = FontWeight.Medium,
+                color = StillColors.ink,
+                letterSpacing = 0.04.em,
+                lineHeight = 1.1f,
+            )
+            MonoText(if (at == null) " " else "EVERY DAY", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
+        }
+        if (!allowed && (rules.before != Reminder.None || rules.morningAt != null)) {
+            MonoText("Notifications are off for StillNote, so reminders can't show.", 12f, color = StillColors.inkHigh, lineHeight = 1.5f)
+            TextLink(
+                "Turn them on",
+                onClick = {
+                    if (canAsk) ask()
+                    else context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                },
+            )
+        }
+    }
+}
+
+/** The morning list's times: off, then 05:00 to 12:00 every half hour. */
+private val MorningSteps: List<Int?> = listOf(null) + (5 * 60..12 * 60 step 30).toList()

@@ -39,6 +39,7 @@ class LocalTaskRepository(
             minutes = draft.time?.let { it.hour * 60 + it.minute },
             priority = draft.priority.name,
             project = draft.project,
+            reminder = draft.reminder,
             created = now(),
             dirty = true,
             changedAt = now(),
@@ -55,6 +56,8 @@ class LocalTaskRepository(
         tasks.edit(id, draft.title, draft.date?.toString(), minutes, draft.priority.name, draft.project, now())
         schedulePush()
     }
+
+    override suspend fun setReminder(id: String, reminder: Int?) = tasks.setReminder(id, reminder)
 
     override suspend fun setDone(id: String, done: Boolean) {
         tasks.setDone(id, done, now())
