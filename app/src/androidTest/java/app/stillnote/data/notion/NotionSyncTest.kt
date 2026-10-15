@@ -104,7 +104,7 @@ class NotionSyncTest {
 
         val created = notion.created.single()
         assertEquals("ds-1", created.first)
-        assertEquals(mapping.newPageProperties(local("a", title = "Buy a card"), ZoneId.of("Europe/Rome")), created.second)
+        assertEquals(mapping.pageProperties(local("a", title = "Buy a card"), ZoneId.of("Europe/Rome")), created.second)
         assertEquals(State("page-1", dirty = false, failed = false, trashed = false), row("a"))
         assertEquals(0, tasks.observePendingCount().first())
     }
@@ -128,6 +128,41 @@ class NotionSyncTest {
         clock += 60_000
         sync.push()
         assertNull(row("b"))
+    }
+
+    @Test
+    fun anEditSendsEveryField_andATickAfterItOnlyTheCheckbox() = runBlocking {
+        tasks.insert(synced("a", "p-a", project = "Work"))
+        tasks.edit("a", "Call the plumber", "2026-10-14", 9 * 60, "High", project = null, clock)
+
+        assertEquals(Outcome.Done, sync.push())
+        val sent = notion.updates.single()
+        assertEquals(Update("p-a", mapping.pageProperties(tasks.byId("a")!!, ZoneId.of("Europe/Rome")), inTrash = false), sent)
+        // Taken out of Work, it goes back to the option that means no project.
+        assertEquals(buildJsonObject { putJsonObject("select") { put("name", "Task") } }, sent.properties!!["prj"])
+        assertEquals(State("p-a", dirty = false, failed = false, trashed = false), row("a"))
+
+        // A tick sends only the checkbox, so it can't undo something changed in Notion since.
+        notion.updates.clear()
+        tasks.setDone("a", true, clock)
+        sync.push()
+        assertEquals(listOf(Update("p-a", mapping.doneProperty(true), inTrash = false)), notion.updates)
+    }
+
+    @Test
+    fun anEditMadeWhileATickIsInFlightIsSentInFullNext() = runBlocking {
+        tasks.insert(synced("a", "p-a"))
+        tasks.setDone("a", true, clock)
+        notion.duringUpdate = { tasks.edit("a", "Renamed", "2026-10-13", null, "None", null, clock) }
+
+        sync.push()
+        assertTrue(row("a")!!.dirty)
+
+        notion.duringUpdate = {}
+        notion.updates.clear()
+        sync.push()
+        assertEquals(mapping.pageProperties(tasks.byId("a")!!, ZoneId.of("Europe/Rome")), notion.updates.single().properties)
+        assertFalse(row("a")!!.dirty)
     }
 
     @Test
@@ -358,6 +393,7 @@ private class ScriptedNotion : NotionApi {
     var failAll: Kind? = null
     val failUpdate = mutableMapOf<String, Kind>()
     var duringCreate: suspend () -> Unit = {}
+    var duringUpdate: suspend () -> Unit = {}
 
     private fun called() {
         calls++
@@ -386,6 +422,7 @@ private class ScriptedNotion : NotionApi {
     override suspend fun updatePage(token: String, pageId: String, properties: JsonObject?, inTrash: Boolean) {
         called()
         failUpdate[pageId]?.let { throw NotionException(it) }
+        duringUpdate()
         updates += Update(pageId, properties, inTrash)
     }
 }

@@ -50,8 +50,8 @@ data class PropertyMapping(
         )
     }
 
-    /** Everything the app sets when it creates a page. */
-    fun newPageProperties(row: TaskRow, zone: ZoneId): JsonObject = buildJsonObject {
+    /** Everything the app sets on a page: all of it when the page is created, and again after an edit. */
+    fun pageProperties(row: TaskRow, zone: ZoneId): JsonObject = buildJsonObject {
         putJsonObject(title) {
             putJsonArray("title") {
                 add(buildJsonObject { putJsonObject("text") { put("content", row.title.take(MAX_TEXT)) } })
@@ -67,8 +67,10 @@ data class PropertyMapping(
         }
         // A project made on the phone becomes an option in Notion the first time it is written.
         val projectName = row.project ?: noProjectOption
-        if (project != null && projectName != null) {
-            putJsonObject(project) { putJsonObject("select") { put("name", projectName) } }
+        if (project != null) {
+            putJsonObject(project) {
+                if (projectName == null) put("select", JsonNull) else putJsonObject("select") { put("name", projectName) }
+            }
         }
     }
 

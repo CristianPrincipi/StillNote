@@ -1,5 +1,6 @@
 package app.stillnote.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -30,6 +31,12 @@ data class TaskRow(
     val trashed: Boolean = false,
     /** Changed here since Notion last saw it. */
     val dirty: Boolean = false,
+    /**
+     * Edited here, not just ticked or deleted, since Notion last saw it: the next push sends every
+     * field. A tick alone sends only the checkbox, so it can't undo an edit made in Notion meanwhile.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val edited: Boolean = false,
     /** Goes up with every local change, so a push can tell whether the row moved on meanwhile. */
     val rev: Int = 0,
     /** Notion refused the last push of this row; it waits for a retry. */

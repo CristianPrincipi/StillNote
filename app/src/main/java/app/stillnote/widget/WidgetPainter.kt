@@ -60,6 +60,7 @@ sealed interface WidgetTap {
     data object OpenToday : WidgetTap
     data object NewTask : WidgetTap
     data class Complete(val taskId: String) : WidgetTap
+    data class Edit(val taskId: String) : WidgetTap
 }
 
 /** A tap area, in dp from the widget's top-left corner. */
@@ -286,7 +287,11 @@ class WidgetPainter(private val context: Context) {
             val titleLeft = left + kind.checkWidth.dp.toPx() + kind.rowGap.dp.toPx()
             val title = measurer.line(task.title, handStyle(note.font.family, kind.rowTitleSize, color = ink), titleRight - titleLeft)
             drawText(title, topLeft = Offset(titleLeft, middle - title.size.height / 2f))
-            areas += Triple(Rect(0f, y, size.width, y + pitch), WidgetTap.Complete(task.id), "Mark ${task.title} as done")
+            // The circle's strip completes the task and the rest of the row opens it in the app.
+            // Rows are only about 30 tall, so the strip is at least 48 wide to make up for it.
+            val check = max(titleLeft, 48.dp.toPx())
+            areas += Triple(Rect(0f, y, check, y + pitch), WidgetTap.Complete(task.id), "Mark ${task.title} as done")
+            areas += Triple(Rect(check, y, size.width, y + pitch), WidgetTap.Edit(task.id), "Edit ${task.title}")
         }
 
         val more = count - shown

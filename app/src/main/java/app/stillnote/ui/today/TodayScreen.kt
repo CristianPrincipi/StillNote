@@ -44,6 +44,7 @@ import app.stillnote.ui.components.StruckHandText
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
 import app.stillnote.ui.components.dashedBottomBorder
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
 import app.stillnote.ui.theme.AddPadShape
@@ -61,6 +62,7 @@ fun TodayScreen(
     viewModel: TodayViewModel,
     onOpenSettings: () -> Unit,
     onAddTask: () -> Unit,
+    onEditTask: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -72,7 +74,7 @@ fun TodayScreen(
         PaperPage {
             TodayHeader(state, onOpenSettings)
             PullToSync(syncing, state.canSync, viewModel::syncNow, Modifier.weight(1f)) {
-                TaskList(state, viewModel, Modifier.fillMaxSize())
+                TaskList(state, viewModel, onEditTask, Modifier.fillMaxSize())
             }
         }
         val strip = Modifier
@@ -118,7 +120,7 @@ private fun TodayHeader(state: TodayUiState, onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun TaskList(state: TodayUiState, viewModel: TodayViewModel, modifier: Modifier = Modifier) {
+private fun TaskList(state: TodayUiState, viewModel: TodayViewModel, onEdit: (Task) -> Unit, modifier: Modifier = Modifier) {
     val allClear = state.loaded && state.open.isEmpty()
     val list = rememberLazyListState()
     list.StayAtTop(firstKey = (state.open + state.done).firstOrNull()?.id)
@@ -136,6 +138,7 @@ private fun TaskList(state: TodayUiState, viewModel: TodayViewModel, modifier: M
                 tilt = postItTilt(index),
                 onDone = { viewModel.setDone(task, true) },
                 onDelete = { viewModel.delete(task) },
+                onEdit = { onEdit(task) },
                 modifier = Modifier
                     .animateItem()
                     .padding(top = if (index == 0) 0.dp else 14.dp),
@@ -155,6 +158,7 @@ private fun TaskList(state: TodayUiState, viewModel: TodayViewModel, modifier: M
                     task = task,
                     onNotDone = { viewModel.setDone(task, false) },
                     onDelete = { viewModel.delete(task) },
+                    onEdit = { onEdit(task) },
                     modifier = Modifier.animateItem(),
                 )
             }
@@ -182,6 +186,7 @@ private fun TaskPostIt(
     tilt: Float,
     onDone: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -190,6 +195,7 @@ private fun TaskPostIt(
             .rotate(tilt)
             .paperShadow(PostItShape, Shadows.postIt)
             .background(task.priority.paper, PostItShape)
+            .tapToEdit(onEdit)
             .heightIn(min = 70.dp)
             .padding(start = 4.dp, top = 10.dp, end = 2.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -214,12 +220,13 @@ private fun TaskPostIt(
 }
 
 @Composable
-private fun DoneRow(task: Task, onNotDone: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+private fun DoneRow(task: Task, onNotDone: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 53.dp)
             .dashedBottomBorder()
+            .tapToEdit(onEdit)
             .padding(start = 4.dp, end = 2.dp, bottom = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

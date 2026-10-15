@@ -35,7 +35,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,9 +58,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -87,17 +91,19 @@ import app.stillnote.ui.theme.handStyle
 import app.stillnote.ui.theme.paper
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.min
 
-/** The new-task note floating over the scrim. Tapping outside closes it without saving. */
+/** The note for a new task, or for changing one, floating over the scrim. Tapping outside closes it without saving. */
 @Composable
 fun NoteSheetOverlay(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier: Modifier = Modifier) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     // The pickers and the keyboard don't fit together, so a picker takes the keyboard's place:
-    // the note starts on the keyboard unless it was opened with a picker already showing.
-    LaunchedEffect(Unit) { if (draft.picker == null) focus.requestFocus() }
+    // a new note starts on the keyboard unless it was opened with a picker already showing.
+    // A task being changed opens without it, so the whole note shows; a tap on the text brings it up.
+    LaunchedEffect(Unit) { if (draft.picker == null && draft.editing == null) focus.requestFocus() }
     LaunchedEffect(draft.picker) { if (draft.picker != null) keyboard?.hide() }
 
     Box(modifier.fillMaxSize()) {
@@ -147,14 +153,14 @@ private fun NotePlacement(top: Dp, content: @Composable () -> Unit) {
 
 @Composable
 private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: FocusRequester) {
-    val color by animateColorAsState(draft.priority?.paper ?: StillColors.canary, tween(260), label = "note colour")
+    val color by animateColorAsState(draft.shownPriority?.paper ?: StillColors.canary, tween(260), label = "note colour")
     val keyboard = LocalSoftwareKeyboardController.current
     Box(
         Modifier
             .rotate(-1.2f)
             .paperShadow(NoteShape, Shadows.note)
             .background(color, NoteShape)
-            .semantics { paneTitle = "New task" }
+            .semantics { paneTitle = if (draft.editing == null) "New task" else "Edit task" }
             // A tap on the paper goes to the text field instead of falling through to the scrim.
             .pointerInput(Unit) {
                 detectTapGestures {
@@ -171,7 +177,12 @@ private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: F
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column {
-                MonoText("NEW TASK", 11f, Modifier.padding(start = 22.dp, end = 18.dp), letterSpacing = 0.16.em)
+                MonoText(
+                    if (draft.editing == null) "NEW TASK" else "EDIT TASK",
+                    11f,
+                    Modifier.padding(start = 22.dp, end = 18.dp),
+                    letterSpacing = 0.16.em,
+                )
                 TitleField(draft, viewModel, focus, Modifier.padding(start = 22.dp, top = 8.dp, end = 18.dp))
                 Chips(draft, Modifier.padding(start = 22.dp, top = 8.dp, end = 18.dp))
                 when (draft.picker) {
@@ -181,7 +192,7 @@ private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: F
                     }
                     Picker.Priority -> {
                         TearLine(Modifier.padding(top = 14.dp))
-                        PriorityPicker(draft.priority, viewModel::setPriority, Modifier.padding(top = 12.dp))
+                        PriorityPicker(draft.shownPriority, viewModel::setPriority, Modifier.padding(top = 12.dp))
                     }
                     Picker.Project -> {
                         TearLine(Modifier.padding(top = 14.dp))
@@ -208,9 +219,14 @@ private fun NoteSheet(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: F
 @Composable
 private fun TitleField(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: FocusRequester, modifier: Modifier = Modifier) {
     val style = handStyle(LocalHandFont.current, 27f, lineHeight = 1.3f)
+    // Held here for the cursor, which starts at the end of a task's title rather than before it.
+    var field by remember { mutableStateOf(TextFieldValue(draft.text, TextRange(draft.text.length))) }
     BasicTextField(
-        value = draft.text,
-        onValueChange = viewModel::setText,
+        value = if (field.text == draft.text) field else field.copy(text = draft.text),
+        onValueChange = {
+            field = it
+            viewModel.setText(it.text)
+        },
         modifier = modifier
             .fillMaxWidth()
             .trimLineBox(rememberLineBoxTrim(style))
@@ -233,14 +249,21 @@ private fun TitleField(draft: NewTaskDraft, viewModel: NewTaskViewModel, focus: 
 @Composable
 private fun Chips(draft: NewTaskDraft, modifier: Modifier = Modifier) {
     val time = draft.time
-    val priority = draft.priority
-    if (time == null && priority == null && !draft.projectPicked) return
+    // Today at any time is the default, so it needs no chip.
+    val day = when {
+        draft.date == null -> "No date"
+        time != null -> "${draft.shortDay()}, ${time.format(TimeFormat)}"
+        draft.date != draft.today -> draft.shortDay()
+        else -> null
+    }
+    val priority = draft.priority.takeIf { draft.priorityPicked || it != Priority.None }
+    if (day == null && priority == null && !draft.projectPicked) return
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (time != null) Chip(StillIcons.Clock, "${draft.shortDay()}, ${time.format(TimeFormat)}")
+        if (day != null) Chip(StillIcons.Clock, day)
         if (priority != null) {
             Chip(StillIcons.Flag, if (priority == Priority.None) "No priority" else "${priority.marks} ${priority.label}")
         }
@@ -291,12 +314,12 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
         Stepper(
             onPrevious = { viewModel.shiftDay(-1) },
             previousLabel = "Previous day",
-            previousEnabled = draft.dayOffset > 0,
+            previousEnabled = (draft.date ?: draft.today) > draft.earliest,
             onNext = { viewModel.shiftDay(1) },
             nextLabel = "Next day",
         ) {
             HandText(draft.dayName(), 28f, weight = FontWeight.Bold, lineHeight = 1.15f)
-            MonoText(draft.date.format(DayDateFormat).uppercase(), 11f, letterSpacing = 0.16.em)
+            MonoText((draft.date ?: draft.today).format(DayDateFormat).uppercase(), 11f, letterSpacing = 0.16.em)
         }
         Box(
             Modifier
@@ -311,16 +334,17 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
             onNext = { viewModel.shiftTime(1) },
             nextLabel = "30 minutes later",
         ) {
-            val time = draft.time ?: return@Stepper
+            val time = draft.time
             MonoText(
-                time.format(TimeFormat),
+                time?.format(TimeFormat) ?: "Any time",
                 30f,
                 weight = FontWeight.Medium,
                 color = StillColors.ink,
                 letterSpacing = 0.04.em,
                 lineHeight = 1.1f,
             )
-            MonoText(partOfDay(time.hour).uppercase(), 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
+            // Blank under "Any time", but kept, so the note doesn't jump when a time is picked.
+            MonoText(time?.let { partOfDay(it.hour).uppercase() } ?: " ", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
         }
     }
 }
@@ -506,7 +530,7 @@ private fun NoteActions(draft: NewTaskDraft, noteColor: Color, viewModel: NewTas
         }
         TapTarget(
             onClick = viewModel::save,
-            description = "Save task",
+            description = if (draft.editing == null) "Save task" else "Save changes",
             modifier = Modifier
                 .size(52.dp)
                 .background(StillColors.ink, CircleShape),
@@ -534,15 +558,20 @@ private fun PickerToggle(icon: IconPaths, active: Boolean, label: String, onClic
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val DayDateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
 
-/** "Today", "Tomorrow", then the weekday. */
-private fun NewTaskDraft.dayName(): String = when (dayOffset) {
-    0 -> "Today"
-    1 -> "Tomorrow"
-    else -> date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+/** "Today", "Tomorrow" or "Yesterday", or null for another day. */
+private fun NewTaskDraft.nearDay(): String? = when (date?.let { ChronoUnit.DAYS.between(today, it) }) {
+    0L -> "Today"
+    1L -> "Tomorrow"
+    -1L -> "Yesterday"
+    else -> null
 }
 
-/** "Today", "Tomorrow", then "Wed 14 Oct". */
-private fun NewTaskDraft.shortDay(): String = if (dayOffset <= 1) dayName() else date.format(DayDateFormat)
+/** "Today", "Tomorrow" or "Yesterday", otherwise the weekday. */
+private fun NewTaskDraft.dayName(): String =
+    nearDay() ?: date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH) ?: "No date"
+
+/** "Today", "Tomorrow" or "Yesterday", otherwise "Wed 14 Oct". */
+private fun NewTaskDraft.shortDay(): String = nearDay() ?: date?.format(DayDateFormat) ?: "No date"
 
 private fun partOfDay(hour: Int): String = when {
     hour < 12 -> "Morning"

@@ -35,6 +35,22 @@ class FakeTaskRepository : TaskRepository {
         return task
     }
 
+    // The project cards hold tasks of their own, so a task can be in either list.
+    override suspend fun task(id: String): Task? =
+        tasks.value.firstOrNull { it.id == id } ?: projects.value.flatMap { it.open }.firstOrNull { it.id == id }
+
+    override suspend fun update(id: String, draft: TaskDraft) {
+        val old = task(id) ?: return
+        val task = old.copy(title = draft.title, date = draft.date, time = draft.time, priority = draft.priority, project = draft.project)
+        tasks.update { all -> all.map { if (it.id == id) task else it } }
+        projects.update { all ->
+            all.map { project ->
+                val open = project.open.filterNot { it.id == id }
+                project.copy(open = if (project.name == task.project && !task.done) (open + task).sortedWith(TaskOrder.project) else open)
+            }
+        }
+    }
+
     override suspend fun setDone(id: String, done: Boolean) {
         tasks.update { all -> all.map { if (it.id == id) it.copy(done = done) else it } }
         // The mockups' project cards have their own tasks: ticking one takes it off its card.

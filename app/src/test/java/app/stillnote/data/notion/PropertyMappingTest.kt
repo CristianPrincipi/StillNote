@@ -182,14 +182,14 @@ class PropertyMappingTest {
               "%7CbqX": {"select": {"name": "Task"}}
             }"""
         )
-        assertEquals(expected, mapping.newPageProperties(row, rome))
+        assertEquals(expected, mapping.pageProperties(row, rome))
     }
 
     @Test
     fun `writes a plain date, and clears the priority when the database has no None option`() {
         val noNone = mapping.copy(priorityOptions = mapping.priorityOptions - Priority.None)
         val row = TaskRow(id = "1", title = "Read", date = "2026-10-13", priority = "None", created = 0)
-        val properties = noNone.newPageProperties(row, rome)
+        val properties = noNone.pageProperties(row, rome)
         assertEquals(Json.parseToJsonElement("""{"date": {"start": "2026-10-13"}}"""), properties["dt%7B"])
         assertEquals(Json.parseToJsonElement("""{"select": null}"""), properties["W%5BNU"])
     }
@@ -197,7 +197,15 @@ class PropertyMappingTest {
     @Test
     fun `files a new task under its project, which Notion adds as an option if it is new`() {
         val row = TaskRow(id = "1", title = "Water the tomatoes", date = "2026-10-13", priority = "None", project = "Garden", created = 0)
-        assertEquals(Json.parseToJsonElement("""{"select": {"name": "Garden"}}"""), mapping.newPageProperties(row, rome)["%7CbqX"])
+        assertEquals(Json.parseToJsonElement("""{"select": {"name": "Garden"}}"""), mapping.pageProperties(row, rome)["%7CbqX"])
+    }
+
+    @Test
+    fun `takes a task out of its project, even when the database has no option for no project`() {
+        val row = TaskRow(id = "1", title = "Read", date = "2026-10-13", priority = "None", created = 0)
+        assertEquals(Json.parseToJsonElement("""{"select": {"name": "Task"}}"""), mapping.pageProperties(row, rome)["%7CbqX"])
+        val noTask = mapping.copy(noProjectOption = null)
+        assertEquals(Json.parseToJsonElement("""{"select": null}"""), noTask.pageProperties(row, rome)["%7CbqX"])
     }
 
     @Test

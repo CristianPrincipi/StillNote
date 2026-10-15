@@ -21,10 +21,12 @@ These settle items DESIGN.md leaves open (§7), or say how something it doesn't 
 
 Tasks:
 
-- **New task:** priority is None, on a canary note until one is picked. The date is Today with no time. The clock opens at the next half hour, and a time can't be cleared once set. From Today the project is "No project".
+- **New task:** priority is None, on a canary note until one is picked. The date is Today with no time. From Today the project is "No project".
+- **The clock** opens on "Any time", for a new task and for one with no time, so a task can go on another day without a time. From "Any time", › picks the next half hour and ‹ the one before it; after that each step is 30 minutes. A time can't be cleared once set.
+- **Editing a task:** tapping a post-it (on Today or a project card), a Done row or a Calendar day row opens the new-task note filled in, headed "EDIT TASK", in the task's colour and without the keyboard. Its chips show what the task has: a day other than today, a time, a priority other than None, a project, or "No date" for an undated one. The day can't go back before today, or before the task's own day if that is earlier. Send saves the changes, and an unchanged note saves nothing. Ticking and deleting stay on the post-it.
 - **Order on Today:** time ascending with untimed tasks last, then High to None.
 - **Order within a Calendar day:** done tasks first, then the Today order. This applies to the day's squares and to the day panel.
-- **No design yet, so no action:** tapping a post-it's body, or a project card's header.
+- **No design yet, so no action:** tapping a project card's header.
 - **Stroke weights:** use the widths in DESIGN.md and the HTML (1.6 dp circles, and so on). The PNGs draw them thinner only because their renderer rounded fractional borders down to 1 px.
 - **App id** `app.stillnote`, **minSdk** 26. Debug builds are `app.stillnote.debug`, labelled "StillNote debug", so they install next to the release build; their classes stay in `app.stillnote`.
 
@@ -33,7 +35,7 @@ Widget:
 - **One resizable widget**, 2×2 when placed. When it is at least half again as wide as it is tall it draws the 4×2 note.
 - **Small cells:** the note shrinks evenly to fit, but not below 75% of the mockup; shorter than that, it holds fewer rows. Some launchers also shrink the whole widget view to fit small grid cells (OnePlus lays a 2×2 out at 148 dp and shows it at about 110), so on those a 3×3 or 4×3 shows the full note at a readable size.
 - **Drawn as one image** with the app's fonts, shapes and shadows (RemoteViews can't show bundled fonts or tilt), so it follows the Typography setting and tilts the text with the note, as the PNGs do. Invisible tap areas with labels sit over it.
-- **Taps:** a row anywhere completes its task; "Today" and "+N more" open Today; "+" opens the new-task note, or leaves one alone that's already being written. The rest of the note does nothing.
+- **Taps:** a row's circle completes its task, and the rest of the row opens the task in the note to edit it. Rows are only about 30 tall, so the circle's tap area is a strip at least 48 wide. "Today" and "+N more" open Today; "+" opens the new-task note. A row or "+" leaves alone a note that's already being written. The rest of the note does nothing.
 - **More than four tasks on the 4×2:** it shows three and "+N more", since four rows leave no room for the line.
 - **No open tasks:** the header keeps its count ("Today 0", "· 0 to do") and the note says "All clear." or "All clear for today." in the hand font at 20, centred below the header.
 - **Redraws** after a change in the app or on the widget, a background sync, a new font, and the midnight sync.
@@ -80,4 +82,4 @@ Debug builds take these launch extras, used by those scripts. Name the activity 
 - `--ez render_widgets true` draws the widget's two mockup frames and the picker preview from the sample tasks into the app's `files/widgets/`. The preview is copied by hand to `res/drawable-nodpi/widget_preview.png`.
 - `--ez pin_widget true` asks the launcher to place the widget.
 
-How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock: the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`).
+How the data flows: screens read and write `LocalTaskRepository` (Room: tasks and projects). Each change is queued for `PushWorker` (WorkManager), and `NotionSync` pushes and pulls under one lock. A push sends only the checkbox for a tick and every field after an edit (`TaskRow.edited`), so a tick can't undo something changed in Notion meanwhile. It pulls the visible month by date, and every task that has a project. While Notion is connected, `PullWorker` does the same with the app closed, every 15 minutes (Android's minimum) and just after midnight, so the future widget doesn't wait for the app to be opened. The token is encrypted with a Keystore key (`KeystoreTokenVault`). Each version of the database schema is saved in `app/schemas`: a change to `TaskRow` or `ProjectRow` needs a new version and a migration (an `AutoMigration` where Room can work it out), or the installed app can't open its data.

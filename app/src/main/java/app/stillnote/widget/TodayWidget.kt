@@ -2,6 +2,7 @@ package app.stillnote.widget
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +39,7 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Today's open tasks on a post-it on the home screen (DESIGN.md §4.7). The note is one drawn
- * image; invisible tap areas over it complete a task, add one, or open Today.
+ * image; invisible tap areas over it complete a task, open one to change it, add one, or open Today.
  */
 class TodayWidget : GlanceAppWidget() {
     // Each size the launcher lays the widget out at gets its own drawing. Some launchers then
@@ -93,6 +94,7 @@ private fun TodayNote(drawing: WidgetDrawing, size: DpSize) {
 private fun WidgetTap.action(context: Context): Action = when (this) {
     WidgetTap.OpenToday -> actionStartActivity(WidgetRequest.Today.intent(context))
     WidgetTap.NewTask -> actionStartActivity(WidgetRequest.NewTask.intent(context))
+    is WidgetTap.Edit -> actionStartActivity(WidgetRequest.EditTask(taskId).intent(context))
     is WidgetTap.Complete -> actionRunCallback<CompleteTask>(actionParametersOf(CompleteTask.TaskId to taskId))
 }
 
@@ -110,17 +112,36 @@ class CompleteTask : ActionCallback {
 }
 
 /** What a tap on the widget asks the app to show. */
-enum class WidgetRequest(private val action: String) {
-    Today("app.stillnote.action.TODAY"),
-    NewTask("app.stillnote.action.NEW_TASK"),
-    ;
+sealed interface WidgetRequest {
+    data object Today : WidgetRequest
+    data object NewTask : WidgetRequest
+
+    /** The task in the note, to change it. */
+    data class EditTask(val taskId: String) : WidgetRequest
 
     /** Brings the running app forward, or starts it, with this request. */
     fun intent(context: Context): Intent = Intent(context, MainActivity::class.java)
-        .setAction(action)
+        .setAction(
+            when (this) {
+                Today -> TODAY
+                NewTask -> NEW_TASK
+                is EditTask -> EDIT_TASK
+            }
+        )
+        // The task goes in the data, which also keeps each row's PendingIntent apart from the others'.
+        .setData((this as? EditTask)?.let { Uri.Builder().scheme("stillnote").authority("task").appendPath(it.taskId).build() })
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
     companion object {
-        fun from(intent: Intent?): WidgetRequest? = entries.firstOrNull { it.action == intent?.action }
+        private const val TODAY = "app.stillnote.action.TODAY"
+        private const val NEW_TASK = "app.stillnote.action.NEW_TASK"
+        private const val EDIT_TASK = "app.stillnote.action.EDIT_TASK"
+
+        fun from(intent: Intent?): WidgetRequest? = when (intent?.action) {
+            TODAY -> Today
+            NEW_TASK -> NewTask
+            EDIT_TASK -> intent.data?.lastPathSegment?.let(::EditTask)
+            else -> null
+        }
     }
 }

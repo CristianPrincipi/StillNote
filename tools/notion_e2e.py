@@ -5,8 +5,9 @@
 
 It wipes the app's data first, then walks through: the first-run flow against the mockups'
 five databases, then a fresh install used without Notion, connected from Settings, synced both
-ways (tasks and projects, by pulling down, and in the background with the app closed), used
-offline, a refused change and its Retry, and disconnected.
+ways (tasks and projects, by pulling down, and in the background with the app closed), tasks
+changed from the app and from the widget, used offline, a refused change and its Retry, and
+disconnected.
 Screenshots go to screenshots/: the designed screens under their mockup's name, the rest as
 m2-*.png. The emulator needs the display described in tools/screens.py.
 """
@@ -14,11 +15,11 @@ import os
 import re
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fake_notion  # noqa: E402
-from screens import APP, OUT, adb, back, close_sheet, compare, launch, nodes, place_widget, shot, tap, type_text  # noqa: E402
+from screens import APP, OUT, adb, back, close_sheet, compare, home, launch, nodes, place_widget, shot, tap, tap_task, type_text  # noqa: E402
 
 PORT = 8787
 TOKEN = "fake-token-for-stillnote"  # 24 characters, like the dots in the Settings mockup
@@ -234,6 +235,28 @@ def without_notion_then_connected():
         pull_down()
         expect(on_screen("Pulled from Notion"), "pulling Today down brings in a task just added in Notion")
 
+        print("Changing a task")
+        tap_task("Pulled from Notion")
+        expect(on_screen("EDIT TASK"), "tapping a post-it opens it in the note")
+        tap("Pulled from Notion")
+        clear_field()
+        type_text("Pulled and renamed")
+        back()  # hides the keyboard
+        tap("Set priority")
+        tap("High")
+        tap("Set project")
+        tap("Steady")  # a project whose card nothing below counts
+        shot("m3-edit-task-synced")
+        tap("Save changes")
+        expect(on_screen("Pulled and renamed"), "the post-it shows the new title")
+        expect(wait_for(lambda: (task("Pulled and renamed") or {}).get("priority") == "High"), "the change reaches Notion")
+        changed = task("Pulled and renamed") or {}
+        # The app writes the time in the phone's zone, so compare moments rather than text.
+        start = changed.get("start") or ""
+        kept = "T" in start and datetime.fromisoformat(start) == datetime.fromisoformat(f"{today.isoformat()}T20:00:00+02:00")
+        expect(changed.get("project") == "Steady" and kept and task("Pulled from Notion") is None,
+               f"on the same page, with Project Steady and the time kept ({changed})")
+
         print("With the app closed")
         place_widget()
         adb("shell", "am", "kill", APP)
@@ -250,10 +273,15 @@ def without_notion_then_connected():
         launch()
         expect(on_screen("Added while away"), "and the task it brought in is on Today when the app opens")
         notion.fail = None
+        home()
+        tap("Edit Added while away")
+        expect(on_screen("EDIT TASK") and on_screen("Added while away"), "tapping a row on the widget opens its task in the note")
+        back()
         with notion.lock:
             notion.pages[task("Added while away")["id"]]["in_trash"] = True
         pull_down()
-        expect(wait_for(lambda: "Added while away" not in labels(), 20), "a page trashed in Notion leaves the phone on the next pull")
+        expect(wait_for(lambda: not any("Added while away" in label for label in labels()), 20),
+               "a page trashed in Notion leaves the phone on the next pull")
         expect(wait_for(lambda: not any("couldn't sync" in label for label in labels()), 20), "and the header is clear again")
 
         print("Projects")
@@ -288,17 +316,25 @@ def without_notion_then_connected():
                f"dated today with Project Arch and priority High ({made})")
         tap("TASKS")
 
+        tomorrow = (today + timedelta(days=1)).isoformat()
         tap("Add a task")
         type_text("Dentist")
         tap("Set date and time")
         tap("Next day")
+        tap("30 minutes later")  # from "Any time" to the next half hour
         shown = next(label for label in labels() if len(label) == 5 and label[2] == ":")
         tap("Save task")
         expect(wait_for(lambda: task("Dentist") is not None), "a new task becomes a page")
         made = task("Dentist") or {}
-        tomorrow = (today + timedelta(days=1)).isoformat()
         expect(str(made.get("start", "")).startswith(f"{tomorrow}T{shown}:00") and made.get("project") == "Task",
                f"dated tomorrow at {shown} with a UTC offset, Project Task ({made.get('start')})")
+        tap("Add a task")
+        type_text("Haircut")
+        tap("Set date and time")
+        tap("Next day")
+        tap("Save task")
+        expect(wait_for(lambda: task("Haircut") is not None), "a task for tomorrow at any time becomes a page")
+        expect((task("Haircut") or {}).get("start") == tomorrow, f"with a plain date ({(task('Haircut') or {}).get('start')})")
 
         notion.add_task("Added in Notion", today, "21:00", "Low", project="Arch")
         launch()

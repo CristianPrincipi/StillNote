@@ -75,7 +75,8 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, widg
     var newProjectOpen by rememberSaveable { mutableStateOf(false) }
     val sheetOpen = draft != null || newProjectOpen
 
-    // The widget's header and "+N more" open Today; its "+" opens the note, unless one is already being written.
+    // The widget's header and "+N more" open Today. Its "+" opens the note, and a row opens its task
+    // in the note to change it, unless a note is already being written.
     val request by widgetRequest.collectAsStateWithLifecycle()
     LaunchedEffect(request) {
         val asked = request ?: return@LaunchedEffect
@@ -83,7 +84,11 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, widg
         settingsOpen = false
         addMenuOpen = false
         newProjectOpen = false
-        if (asked == WidgetRequest.NewTask && newTask.draft.value == null) newTask.open()
+        when (asked) {
+            WidgetRequest.Today -> Unit
+            WidgetRequest.NewTask -> if (newTask.draft.value == null) newTask.open()
+            is WidgetRequest.EditTask -> newTask.openToEdit(asked.taskId)
+        }
         widgetRequest.value = null
     }
 
@@ -116,11 +121,12 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, widg
             else -> Column {
                 Box(Modifier.weight(1f)) {
                     when (tab) {
-                        Tab.Calendar -> CalendarScreen(viewModel(factory = StillViewModels))
+                        Tab.Calendar -> CalendarScreen(viewModel(factory = StillViewModels), onEditTask = { newTask.openToEdit(it) })
                         Tab.Tasks -> TodayScreen(
                             viewModel = viewModel(factory = StillViewModels),
                             onOpenSettings = { settingsOpen = true },
                             onAddTask = newTask::open,
+                            onEditTask = { newTask.openToEdit(it) },
                         )
                         Tab.Projects -> ProjectsScreen(
                             viewModel = projects,
@@ -134,6 +140,7 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, widg
                                 addMenuOpen = false
                                 newProjectOpen = true
                             },
+                            onEditTask = { newTask.openToEdit(it) },
                         )
                     }
                 }

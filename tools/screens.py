@@ -66,6 +66,16 @@ def tap(label, times=1, nth=0):
     time.sleep(0.6)
 
 
+def tap_task(title):
+    """Taps a task's title, on its post-it or row, which opens the task in the note."""
+    found = [bounds for name, bounds in nodes() if name.startswith(title)]
+    if not found:
+        sys.exit(f"no task {title!r} on screen")
+    x0, y0, x1, y1 = found[0]
+    adb("shell", "input", "tap", str((x0 + x1) // 2), str((y0 + y1) // 2))
+    time.sleep(1.2)
+
+
 def close_sheet():
     """Taps the scrim above a note or card, which closes it without saving."""
     adb("shell", "input", "tap", "40", str(status_bar() + 60))
@@ -182,6 +192,8 @@ def main():
     type_text("Buy a birthday card for Giulia")
     tap("Set date and time")
     tap("Next day")
+    shot("m3-new-task-any-time")
+    tap("30 minutes later")  # from "Any time" to the next half hour
     shown = next(label for label, _ in nodes() if re.fullmatch(r"\d\d:\d\d", label))
     minutes = int(shown[:2]) * 60 + int(shown[3:])
     tap("30 minutes later", times=(18 * 60 - minutes) // 30 % 48)
@@ -192,12 +204,28 @@ def main():
     shot("08-new-task-priority")
     close_sheet()
 
+    # Changing a task: no mockup, so these are only for looking at.
+    tap_task("Reply to Marco about Friday")
+    shot("m3-edit-task")
+    tap("Set date and time")
+    shot("m3-edit-task-date-time")
+    close_sheet()
+    tap_task("Water the plants")
+    shot("m3-edit-done-task")
+    close_sheet()
+
     tap("CALENDAR")
     shot("09-calendar")
+    tap_task("Reply to Marco about Friday")
+    shot("m3-edit-calendar-task")
+    close_sheet()
 
     tap("PROJECTS")
     wait_for_label("Mark Draft the Q4 plan as done")
     shot("10-projects")
+    tap_task("Draft the Q4 plan")
+    shot("m3-edit-project-task")
+    close_sheet()
     tap("Add a task or project")
     shot("11-projects-add-menu")
     tap("New task")
