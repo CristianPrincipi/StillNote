@@ -29,6 +29,7 @@ class FakeTaskRepository : TaskRepository {
             time = draft.time,
             priority = draft.priority,
             project = draft.project,
+            reminder = draft.reminder,
         )
         tasks.update { it + task }
         projects.update { all -> all.map { if (it.name == task.project) it.copy(open = it.open + task) else it } }
@@ -49,6 +50,11 @@ class FakeTaskRepository : TaskRepository {
                 project.copy(open = if (project.name == task.project && !task.done) (open + task).sortedWith(TaskOrder.project) else open)
             }
         }
+    }
+
+    override suspend fun setReminder(id: String, reminder: Int?) {
+        tasks.update { all -> all.map { if (it.id == id) it.copy(reminder = reminder) else it } }
+        projects.update { all -> all.map { project -> project.copy(open = project.open.map { if (it.id == id) it.copy(reminder = reminder) else it }) } }
     }
 
     override suspend fun setDone(id: String, done: Boolean) {

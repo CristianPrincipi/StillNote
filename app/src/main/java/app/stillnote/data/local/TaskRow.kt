@@ -45,6 +45,11 @@ data class TaskRow(
     val pushedAt: Long = 0,
     /** Epoch millis of the last local change, 0 if it only ever came from Notion. */
     val changedAt: Long = 0,
+    /** The task's own reminder, or null for the default. Only on the phone; see [app.stillnote.data.Reminder]. */
+    val reminder: Int? = null,
+    /** Epoch millis when "Later" on its reminder brings it back, 0 if not snoozed. Only on the phone. */
+    @ColumnInfo(defaultValue = "0")
+    val snoozedUntil: Long = 0,
 )
 
 fun TaskRow.toTask() = Task(
@@ -55,6 +60,7 @@ fun TaskRow.toTask() = Task(
     priority = Priority.valueOf(priority),
     project = project,
     done = done,
+    reminder = reminder,
 )
 
 /** A project card. Its name is the label tasks carry, which in Notion is a select option. */

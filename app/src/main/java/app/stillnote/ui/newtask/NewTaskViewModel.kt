@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import app.stillnote.data.AppClock
 import app.stillnote.data.Features
 import app.stillnote.data.Priority
+import app.stillnote.data.Reminder
+import app.stillnote.data.ReminderSettings
 import app.stillnote.data.Task
 import app.stillnote.data.TaskDraft
 import app.stillnote.data.TaskRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +23,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 enum class Picker { When, Priority, Project }
+
+/** The reminder stepper's stops, in order: the default, none, then the minutes before. */
+val ReminderSteps: List<Int?> = listOf(null, Reminder.None) + Reminder.choices
 
 /**
  * The note being written: a new task, or a change to [editing]. [minutes] is the time of day,
@@ -38,6 +44,8 @@ data class NewTaskDraft(
     /** True once a project, or "No project", has been picked; only then does its chip show. */
     val projectPicked: Boolean = false,
     val project: String? = null,
+    /** The task's own reminder, or null for the default in Settings. */
+    val reminder: Int? = null,
     val picker: Picker? = null,
 ) {
     val time: LocalTime? get() = minutes?.let { LocalTime.of(it / 60, it % 60) }
@@ -49,7 +57,11 @@ data class NewTaskDraft(
     val earliest: LocalDate get() = minOf(today, editing?.date ?: today)
 }
 
-class NewTaskViewModel(private val tasks: TaskRepository, private val clock: AppClock) : ViewModel() {
+class NewTaskViewModel(
+    private val tasks: TaskRepository,
+    private val clock: AppClock,
+    reminders: Flow<ReminderSettings>,
+) : ViewModel() {
     /** Null while the note is closed. */
     private val _draft = MutableStateFlow<NewTaskDraft?>(null)
     val draft: StateFlow<NewTaskDraft?> = _draft.asStateFlow()
@@ -60,6 +72,21 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val features: StateFlow<Features> = tasks.features.stateIn(viewModelScope, SharingStarted.Eagerly, Features())
+
+    /** Settings' reminder, which a task follows unless it has its own. */
+    val reminderDefault: StateFlow<Int> =
+        reminders.map { it.before }.stateIn(viewModelScope, SharingStarted.Eagerly, Reminder.DEFAULT)
+
+    /**
+     * True once a task that will remind has been saved, until [notificationsAsked]: the moment to
+     * ask Android for permission to notify, if it hasn't been given.
+     */
+    private val _askNotifications = MutableStateFlow(false)
+    val askNotifications: StateFlow<Boolean> = _askNotifications.asStateFlow()
+
+    fun notificationsAsked() {
+        _askNotifications.value = false
+    }
 
     fun open() {
         _draft.value = NewTaskDraft(today = clock.today.value)
@@ -86,6 +113,7 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
             priority = task.priority,
             projectPicked = task.project != null,
             project = task.project,
+            reminder = task.reminder,
         )
     }
 
@@ -126,6 +154,11 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
         copy(minutes = first % DAY_MINUTES, date = if (first >= DAY_MINUTES && day == today) day.plusDays(1) else day)
     }
 
+    /** Moves along [ReminderSteps], stopping at either end. */
+    fun shiftReminder(steps: Int) = edit {
+        copy(reminder = ReminderSteps[(ReminderSteps.indexOf(reminder) + steps).coerceIn(ReminderSteps.indices)])
+    }
+
     fun setPriority(priority: Priority) = edit { copy(priority = priority, priorityPicked = true) }
 
     /** [project] is null for "No project". */
@@ -137,13 +170,17 @@ class NewTaskViewModel(private val tasks: TaskRepository, private val clock: App
         val title = draft.text.trim()
         if (title.isEmpty()) return
         _draft.value = null
-        val result = TaskDraft(title, draft.date, draft.time, draft.priority, draft.project)
+        val result = TaskDraft(title, draft.date, draft.time, draft.priority, draft.project, draft.reminder)
         val editing = draft.editing
+        if (draft.time != null && (draft.reminder ?: reminderDefault.value) != Reminder.None) _askNotifications.value = true
         viewModelScope.launch {
-            when {
-                editing == null -> tasks.create(result)
-                result != editing.asDraft() -> tasks.update(editing.id, result)
+            if (editing == null) {
+                tasks.create(result)
+                return@launch
             }
+            // The reminder stays on the phone, so changing only that leaves Notion out of it.
+            if (result.copy(reminder = null) != editing.asDraft()) tasks.update(editing.id, result)
+            if (draft.reminder != editing.reminder) tasks.setReminder(editing.id, draft.reminder)
         }
     }
 

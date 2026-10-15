@@ -26,6 +26,9 @@ interface TaskRepository {
     /** Gives the task with [id] the title, date, time, priority and project of [draft]. */
     suspend fun update(id: String, draft: TaskDraft)
 
+    /** Sets the task's own reminder, or null to follow the default. Nothing goes to Notion. */
+    suspend fun setReminder(id: String, reminder: Int?)
+
     suspend fun setDone(id: String, done: Boolean)
 
     suspend fun trash(id: String)

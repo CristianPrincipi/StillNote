@@ -19,6 +19,8 @@ data class Task(
     val priority: Priority = Priority.None,
     val project: String? = null,
     val done: Boolean = false,
+    /** This task's own reminder: see [Reminder]. It stays on the phone; Notion has no field for it. */
+    val reminder: Int? = null,
 )
 
 data class TaskDraft(
@@ -28,7 +30,18 @@ data class TaskDraft(
     val time: LocalTime? = null,
     val priority: Priority = Priority.None,
     val project: String? = null,
+    val reminder: Int? = null,
 )
+
+/**
+ * How long before a task's time to remind: minutes from [choices], or [None]. A task's own
+ * reminder is null when it follows the default in Settings.
+ */
+object Reminder {
+    const val None = -1
+    val choices = listOf(5, 10, 15, 30, 60)
+    const val DEFAULT = 10
+}
 
 /** A project and what its card shows: the tasks still open, and how many are done. */
 data class Project(val name: String, val open: List<Task>, val done: Int)

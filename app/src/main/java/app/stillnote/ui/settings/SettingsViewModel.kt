@@ -6,9 +6,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.HandFont
+import app.stillnote.data.ReminderSettings
 import app.stillnote.data.SettingsStore
 import app.stillnote.data.notion.NotionAccount
 import app.stillnote.data.notion.NotionException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -81,5 +83,24 @@ class SettingsViewModel(
 
     fun setHandFont(font: HandFont) {
         viewModelScope.launch { settings.setHandFont(font) }
+    }
+
+    val reminders: StateFlow<ReminderSettings?> =
+        settings.reminders.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun setReminderBefore(minutes: Int) {
+        viewModelScope.launch { settings.setReminderBefore(minutes) }
+    }
+
+    /** [at] in minutes after midnight, or null for off. */
+    fun setMorningList(at: Int?) {
+        viewModelScope.launch { settings.setMorningList(at) }
+    }
+
+    /** True once Android has been asked for permission to notify; after that only its settings page can give it. */
+    val notificationsAsked: Flow<Boolean> = settings.notificationsAsked
+
+    fun markNotificationsAsked() {
+        viewModelScope.launch { settings.setNotificationsAsked() }
     }
 }
