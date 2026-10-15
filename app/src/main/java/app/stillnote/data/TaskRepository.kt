@@ -20,6 +20,12 @@ interface TaskRepository {
 
     suspend fun create(draft: TaskDraft): Task
 
+    /** The task with [id], or null if it is gone or deleted. */
+    suspend fun task(id: String): Task?
+
+    /** Gives the task with [id] the title, date, time, priority and project of [draft]. */
+    suspend fun update(id: String, draft: TaskDraft)
+
     suspend fun setDone(id: String, done: Boolean)
 
     suspend fun trash(id: String)

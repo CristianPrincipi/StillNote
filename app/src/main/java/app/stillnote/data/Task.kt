@@ -23,7 +23,8 @@ data class Task(
 
 data class TaskDraft(
     val title: String,
-    val date: LocalDate,
+    /** Null only when an undated task from Notion is changed without giving it a date. */
+    val date: LocalDate?,
     val time: LocalTime? = null,
     val priority: Priority = Priority.None,
     val project: String? = null,

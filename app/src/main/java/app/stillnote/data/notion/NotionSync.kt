@@ -52,9 +52,13 @@ class NotionSync(
         for (row in pending) {
             try {
                 val pageId = if (row.pageId == null) {
-                    api.createPage(connection.token, connection.database.id, mapping.newPageProperties(row, zone()))
+                    api.createPage(connection.token, connection.database.id, mapping.pageProperties(row, zone()))
                 } else {
-                    val properties = mapping.doneProperty(row.done).takeUnless { row.trashed }
+                    val properties = when {
+                        row.trashed -> null
+                        row.edited -> mapping.pageProperties(row, zone())
+                        else -> mapping.doneProperty(row.done)
+                    }
                     row.pageId.also { api.updatePage(connection.token, it, properties, row.trashed) }
                 }
                 tasks.markPushed(row.id, row.rev, pageId, now())

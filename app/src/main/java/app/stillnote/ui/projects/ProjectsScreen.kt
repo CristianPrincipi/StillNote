@@ -56,6 +56,7 @@ import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.cardHeader
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
@@ -80,6 +81,7 @@ fun ProjectsScreen(
     onMenuToggle: () -> Unit,
     onNewTask: (project: String?) -> Unit,
     onNewProject: () -> Unit,
+    onEditTask: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -101,7 +103,7 @@ fun ProjectsScreen(
                 when {
                     !state.features.projects -> Hint("This database has no project field.")
                     state.loaded && state.projects.isEmpty() -> Hint("No projects yet.")
-                    else -> ProjectCards(state.projects, cards, viewModel::complete, Modifier.fillMaxSize())
+                    else -> ProjectCards(state.projects, cards, viewModel::complete, onEditTask, Modifier.fillMaxSize())
                 }
             }
         }
@@ -139,7 +141,13 @@ fun ProjectsScreen(
 }
 
 @Composable
-private fun ProjectCards(projects: List<Project>, cards: LazyListState, onComplete: (Task) -> Unit, modifier: Modifier = Modifier) {
+private fun ProjectCards(
+    projects: List<Project>,
+    cards: LazyListState,
+    onComplete: (Task) -> Unit,
+    onEdit: (Task) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier,
         state = cards,
@@ -149,7 +157,7 @@ private fun ProjectCards(projects: List<Project>, cards: LazyListState, onComple
         // No keys on purpose: with them the list holds on to the card it was showing, and when
         // Notion's projects arrive above a phone-made one it ends up scrolled to the bottom.
         itemsIndexed(projects) { index, project ->
-            ProjectCard(project, projectCardTilt(index), onComplete)
+            ProjectCard(project, projectCardTilt(index), onComplete, onEdit)
         }
     }
 }
@@ -169,7 +177,7 @@ private fun Hint(text: String) {
 }
 
 @Composable
-private fun ProjectCard(project: Project, tilt: Float, onComplete: (Task) -> Unit, modifier: Modifier = Modifier) {
+private fun ProjectCard(project: Project, tilt: Float, onComplete: (Task) -> Unit, onEdit: (Task) -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(2.dp)
     Column(
         modifier
@@ -203,7 +211,7 @@ private fun ProjectCard(project: Project, tilt: Float, onComplete: (Task) -> Uni
                 verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
                 project.open.forEachIndexed { index, task ->
-                    MiniPostIt(task, miniPostItTilt(index), onComplete = { onComplete(task) })
+                    MiniPostIt(task, miniPostItTilt(index), onComplete = { onComplete(task) }, onEdit = { onEdit(task) })
                 }
             }
         }
@@ -212,7 +220,7 @@ private fun ProjectCard(project: Project, tilt: Float, onComplete: (Task) -> Uni
 
 /** A task on a project card: only its check and its title. */
 @Composable
-private fun MiniPostIt(task: Task, tilt: Float, onComplete: () -> Unit) {
+private fun MiniPostIt(task: Task, tilt: Float, onComplete: () -> Unit, onEdit: () -> Unit) {
     val outline = if (task.priority == Priority.None) Modifier.border(1.dp, StillColors.ink.copy(alpha = 0.14f), MiniPostItShape) else Modifier
     Row(
         modifier = Modifier
@@ -221,6 +229,7 @@ private fun MiniPostIt(task: Task, tilt: Float, onComplete: () -> Unit) {
             .paperShadow(MiniPostItShape, Shadows.cardPostIt)
             .background(task.priority.paper, MiniPostItShape)
             .then(outline)
+            .tapToEdit(onEdit)
             // The mockup's 1 px border sits outside its 44 px row and 2/12 px padding.
             .heightIn(min = 46.dp)
             .padding(start = 3.dp, end = 13.dp),

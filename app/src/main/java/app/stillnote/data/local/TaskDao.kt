@@ -30,6 +30,15 @@ abstract class TaskDao {
     @Query("UPDATE tasks SET trashed = :trashed, dirty = 1, failed = 0, rev = rev + 1, changedAt = :now WHERE id = :id")
     abstract suspend fun setTrashed(id: String, trashed: Boolean, now: Long)
 
+    @Query(
+        "UPDATE tasks SET title = :title, date = :date, minutes = :minutes, priority = :priority, project = :project, " +
+            "edited = 1, dirty = 1, failed = 0, rev = rev + 1, changedAt = :now WHERE id = :id"
+    )
+    abstract suspend fun edit(id: String, title: String, date: String?, minutes: Int?, priority: String, project: String?, now: Long)
+
+    @Query("SELECT * FROM tasks WHERE id = :id AND trashed = 0")
+    abstract suspend fun byId(id: String): TaskRow?
+
     // Pushing to Notion. A deleted task that never reached Notion has nothing to push.
 
     @Query("SELECT * FROM tasks WHERE dirty = 1 AND failed = 0 AND NOT (trashed = 1 AND pageId IS NULL) ORDER BY created, id")
@@ -44,7 +53,8 @@ abstract class TaskDao {
     /** Records a successful push. The row stays dirty if it changed again while the push was in flight. */
     @Query(
         "UPDATE tasks SET pageId = :pageId, pushedAt = :now, " +
-            "dirty = CASE WHEN rev = :rev THEN 0 ELSE dirty END WHERE id = :id"
+            "dirty = CASE WHEN rev = :rev THEN 0 ELSE dirty END, " +
+            "edited = CASE WHEN rev = :rev THEN 0 ELSE edited END WHERE id = :id"
     )
     abstract suspend fun markPushed(id: String, rev: Int, pageId: String, now: Long)
 

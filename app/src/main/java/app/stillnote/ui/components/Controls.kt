@@ -50,6 +50,13 @@ fun TapTarget(
     )
 }
 
+/**
+ * Makes a task's post-it or row open it in the note, to change it. The buttons on it keep their
+ * own taps. Like the rest of the paper it has no ripple; screen readers hear "Edit".
+ */
+fun Modifier.tapToEdit(onEdit: () -> Unit): Modifier =
+    clickable(interactionSource = null, indication = null, onClickLabel = "Edit", role = Role.Button, onClick = onEdit)
+
 /** The hand-drawn circle of check buttons and radio buttons: an outline, or solid when [filled]. */
 @Composable
 fun HandCircle(

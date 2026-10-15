@@ -51,6 +51,7 @@ import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.dashedBottomBorder
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
@@ -64,7 +65,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) {
+fun CalendarScreen(viewModel: CalendarViewModel, onEditTask: (Task) -> Unit, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     PaperPage(modifier) {
@@ -78,7 +79,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 MonthGrid(state, viewModel::select)
-                SelectedDay(state)
+                SelectedDay(state, onEditTask)
             }
         }
     }
@@ -207,7 +208,7 @@ private fun Legend(done: Boolean, label: String) {
 }
 
 @Composable
-private fun SelectedDay(state: CalendarUiState) {
+private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
     val day = state.selected
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
@@ -235,19 +236,21 @@ private fun SelectedDay(state: CalendarUiState) {
             HandText("Nothing written down.", 19f, Modifier.padding(horizontal = 6.dp, vertical = 14.dp), color = StillColors.ink3)
         }
         Column {
-            state.selectedTasks.forEach { task -> DayTaskRow(task, missed = !task.done && day != null && day < state.today) }
+            state.selectedTasks.forEach { task ->
+                DayTaskRow(task, missed = !task.done && day != null && day < state.today, onEdit = { onEdit(task) })
+            }
         }
     }
 }
 
 @Composable
-private fun DayTaskRow(task: Task, missed: Boolean) {
+private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 47.dp)
             .dashedBottomBorder()
-            .semantics(mergeDescendants = true) {}
+            .tapToEdit(onEdit)
             .padding(start = 6.dp, end = 6.dp, bottom = 1.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,

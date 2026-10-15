@@ -35,7 +35,7 @@ class LocalTaskRepository(
         val row = TaskRow(
             id = UUID.randomUUID().toString(),
             title = draft.title,
-            date = draft.date.toString(),
+            date = draft.date?.toString(),
             minutes = draft.time?.let { it.hour * 60 + it.minute },
             priority = draft.priority.name,
             project = draft.project,
@@ -46,6 +46,14 @@ class LocalTaskRepository(
         tasks.insert(row)
         schedulePush()
         return row.toTask()
+    }
+
+    override suspend fun task(id: String): Task? = tasks.byId(id)?.toTask()
+
+    override suspend fun update(id: String, draft: TaskDraft) {
+        val minutes = draft.time?.let { it.hour * 60 + it.minute }
+        tasks.edit(id, draft.title, draft.date?.toString(), minutes, draft.priority.name, draft.project, now())
+        schedulePush()
     }
 
     override suspend fun setDone(id: String, done: Boolean) {
