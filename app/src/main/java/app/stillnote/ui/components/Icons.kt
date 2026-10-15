@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
 
 /** A pen-line icon: SVG path data on a 24×24 grid, stroked with round caps and joins. */
 class IconPaths(private val name: String, private vararg val paths: String) {
@@ -41,7 +41,7 @@ fun InkIcon(
     icon: IconPaths,
     size: Dp,
     modifier: Modifier = Modifier,
-    tint: Color = StillColors.ink,
+    tint: Color = LocalInk.current.ink,
     strokeWidth: Float = 1.6f,
 ) {
     Image(

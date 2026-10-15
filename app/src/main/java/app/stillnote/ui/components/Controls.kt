@@ -20,7 +20,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.stillnote.ui.theme.HandDrawnCircle
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
 
 /** Android's minimum touch target; the mockups draw 44. */
 val TapSize = 48.dp
@@ -64,7 +64,7 @@ fun HandCircle(
     modifier: Modifier = Modifier,
     filled: Boolean = false,
     stroke: Dp = 1.6.dp,
-    color: Color = StillColors.ink,
+    color: Color = LocalInk.current.ink,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(
@@ -79,10 +79,10 @@ fun HandCircle(
     )
 }
 
-/** A solid hand-drawn circle with a tick in the paper colour. */
+/** A solid hand-drawn circle with a tick cut out of it, in the colour of what it's on. */
 @Composable
 fun DoneMark(size: Dp, tickSize: Dp, tickStroke: Float, modifier: Modifier = Modifier) {
     HandCircle(size, modifier, filled = true) {
-        InkIcon(StillIcons.Check, tickSize, tint = StillColors.paper, strokeWidth = tickStroke)
+        InkIcon(StillIcons.Check, tickSize, tint = LocalInk.current.ground, strokeWidth = tickStroke)
     }
 }

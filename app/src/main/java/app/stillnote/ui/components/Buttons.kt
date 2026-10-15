@@ -20,10 +20,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
 import app.stillnote.ui.theme.monoStyle
 
-/** The main action of a screen: an ink pill with canary text and a trailing arrow. */
+/** The main action of a screen: an ink pill with canary text and a trailing arrow (light, on the Night page). */
 @Composable
 fun PrimaryPill(
     text: String,
@@ -32,19 +32,20 @@ fun PrimaryPill(
     enabled: Boolean = true,
     minHeight: Dp = 52.dp,
 ) {
+    val ink = LocalInk.current
     TapTarget(
         onClick = onClick,
         description = null,
         modifier = modifier
             .alpha(if (enabled) 1f else 0.35f)
             .heightIn(min = minHeight)
-            .background(StillColors.ink, CircleShape)
+            .background(ink.ink, CircleShape)
             .padding(start = 26.dp, end = 24.dp),
         enabled = enabled,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            MonoText(text, 14f, weight = FontWeight.Medium, color = StillColors.canary, letterSpacing = 0.08.em)
-            InkIcon(StillIcons.Send, 20.dp, tint = StillColors.canary, strokeWidth = 2f)
+            MonoText(text, 14f, weight = FontWeight.Medium, color = ink.onInk, letterSpacing = 0.08.em)
+            InkIcon(StillIcons.Send, 20.dp, tint = ink.onInk, strokeWidth = 2f)
         }
     }
 }
@@ -57,10 +58,10 @@ fun OutlinePill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         description = null,
         modifier = modifier
             .heightIn(min = 52.dp)
-            .border(1.4.dp, StillColors.ink, CircleShape)
+            .border(1.4.dp, LocalInk.current.ink, CircleShape)
             .padding(horizontal = 24.dp),
     ) {
-        MonoText(text, 14f, weight = FontWeight.Medium, color = StillColors.ink, letterSpacing = 0.08.em)
+        MonoText(text, 14f, weight = FontWeight.Medium, color = LocalInk.current.ink, letterSpacing = 0.08.em)
     }
 }
 
@@ -69,7 +70,7 @@ fun OutlinePill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
 fun BackLink(onClick: () -> Unit, modifier: Modifier = Modifier) {
     TapTarget(onClick, description = null, modifier.heightIn(min = TapSize).padding(start = 6.dp, end = 8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            InkIcon(StillIcons.Back, 18.dp, tint = StillColors.ink2, strokeWidth = 1.8f)
+            InkIcon(StillIcons.Back, 18.dp, tint = LocalInk.current.ink2, strokeWidth = 1.8f)
             MonoText("Back", 13f)
         }
     }
@@ -79,7 +80,7 @@ fun BackLink(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     SmallTarget(onClick, modifier) {
-        BasicText(text, style = monoStyle(12f, color = StillColors.ink).copy(textDecoration = TextDecoration.Underline))
+        BasicText(text, style = monoStyle(12f, color = LocalInk.current.ink).copy(textDecoration = TextDecoration.Underline))
     }
 }
 
@@ -104,7 +105,7 @@ fun LabelButton(
     SmallTarget(onClick, modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             leading?.let { InkIcon(it, 16.dp, strokeWidth = 1.8f) }
-            MonoText(text.uppercase(), 11f, weight = FontWeight.Medium, color = StillColors.ink, letterSpacing = letterSpacing.em)
+            MonoText(text.uppercase(), 11f, weight = FontWeight.Medium, color = LocalInk.current.ink, letterSpacing = letterSpacing.em)
             trailing?.let { InkIcon(it, 14.dp, strokeWidth = 2f) }
         }
     }

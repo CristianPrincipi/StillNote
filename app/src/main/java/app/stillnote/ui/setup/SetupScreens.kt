@@ -10,15 +10,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.HandFont
+import app.stillnote.data.Palette
 import app.stillnote.data.notion.Field
 import app.stillnote.ui.components.BackLink
 import app.stillnote.ui.components.HandCircle
@@ -81,7 +82,10 @@ import app.stillnote.ui.components.paperShadow
 import app.stillnote.ui.components.rememberLineBoxTrim
 import app.stillnote.ui.components.ruledPaper
 import app.stillnote.ui.components.trimLineBox
+import app.stillnote.ui.theme.LocalInk
 import app.stillnote.ui.theme.NoteShape
+import app.stillnote.ui.theme.OnPaper
+import app.stillnote.ui.theme.Page
 import app.stillnote.ui.theme.PileSheetShape
 import app.stillnote.ui.theme.PostItShape
 import app.stillnote.ui.theme.PreviewPostItShape
@@ -89,6 +93,7 @@ import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.family
 import app.stillnote.ui.theme.fontName
 import app.stillnote.ui.theme.handStyle
+import app.stillnote.ui.theme.page
 import app.stillnote.ui.theme.title
 import kotlinx.coroutines.launch
 
@@ -131,33 +136,35 @@ private fun WelcomeScreen(onConnect: () -> Unit, onSkip: () -> Unit) {
             ) {
                 PileSheet(StillColors.sky, 9f, Modifier.offset(142.dp, 128.dp))
                 PileSheet(StillColors.apricot, -8f, Modifier.offset(50.dp, 156.dp))
-                Box(
-                    modifier = Modifier
-                        .offset(82.dp, 188.dp)
-                        .size(226.dp)
-                        .rotate(-1.5f)
-                        .paperShadow(NoteShape, Shadows.pileFront)
-                        .background(StillColors.canary, NoteShape),
-                ) {
-                    HandText(
-                        "Hello.",
-                        66f,
-                        Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 28.dp),
-                        weight = FontWeight.Bold,
-                        lineHeight = 1f,
-                    )
-                    Tape(
-                        Modifier
-                            .align(Alignment.TopCenter)
-                            .offset(y = (-12).dp),
-                        width = 64.dp,
-                        height = 24.dp,
-                        color = StillColors.card.copy(alpha = 0.6f),
-                        tilt = 3f,
-                        edges = false,
-                    )
+                OnPaper {
+                    Box(
+                        modifier = Modifier
+                            .offset(82.dp, 188.dp)
+                            .size(226.dp)
+                            .rotate(-1.5f)
+                            .paperShadow(NoteShape, Shadows.pileFront)
+                            .background(StillColors.canary, NoteShape),
+                    ) {
+                        HandText(
+                            "Hello.",
+                            66f,
+                            Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 28.dp),
+                            weight = FontWeight.Bold,
+                            lineHeight = 1f,
+                        )
+                        Tape(
+                            Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = (-12).dp),
+                            width = 64.dp,
+                            height = 24.dp,
+                            color = StillColors.card.copy(alpha = 0.6f),
+                            tilt = 3f,
+                            edges = false,
+                        )
+                    }
                 }
             }
         }
@@ -272,7 +279,7 @@ private fun ConnectNotionScreen(viewModel: SetupViewModel) {
             )
             val error = viewModel.tokenError
             if (error != null) {
-                MonoText(error, 11f, color = StillColors.inkHigh, lineHeight = 1.6f)
+                MonoText(error, 11f, color = LocalInk.current.alert, lineHeight = 1.6f)
             } else {
                 MonoText(
                     "Starts with ntn_ or secret_. Stored encrypted on this phone and never sent anywhere except Notion.",
@@ -289,31 +296,33 @@ private fun ConnectNotionScreen(viewModel: SetupViewModel) {
 @Composable
 private fun HowToCard(onOpenNotion: () -> Unit) {
     val shape = RoundedCornerShape(2.dp)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .rotate(-0.5f)
-            .paperShadow(shape, Shadows.indexCard)
-            .clip(shape)
-            .ruledPaper(every = 32.dp),
-    ) {
-        Row(
-            modifier = Modifier
+    OnPaper {
+        Column(
+            Modifier
                 .fillMaxWidth()
-                .height(48.dp)
-                .cardHeader()
-                .padding(start = 16.dp, top = 6.dp, end = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                .rotate(-0.5f)
+                .paperShadow(shape, Shadows.indexCard)
+                .clip(shape)
+                .ruledPaper(every = 32.dp),
         ) {
-            HandText("Get your secret", 21f, weight = FontWeight.Bold)
-            LabelButton("Open Notion", onOpenNotion, Modifier.padding(horizontal = 10.dp), trailing = StillIcons.ExternalLink, letterSpacing = 0.1f)
-        }
-        Column(Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 12.dp)) {
-            HowToStep(1, "Go to notion.so/my-integrations")
-            HowToStep(2, "Create a new internal integration")
-            HowToStep(3, "Copy its Internal Integration Secret")
-            HowToStep(4, "Give it access to your tasks database", "In Notion: ••• › Connections › your integration")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .cardHeader()
+                    .padding(start = 16.dp, top = 6.dp, end = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                HandText("Get your secret", 21f, weight = FontWeight.Bold)
+                LabelButton("Open Notion", onOpenNotion, Modifier.padding(horizontal = 10.dp), trailing = StillIcons.ExternalLink, letterSpacing = 0.1f)
+            }
+            Column(Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 12.dp)) {
+                HowToStep(1, "Go to notion.so/my-integrations")
+                HowToStep(2, "Create a new internal integration")
+                HowToStep(3, "Copy its Internal Integration Secret")
+                HowToStep(4, "Give it access to your tasks database", "In Notion: ••• › Connections › your integration")
+            }
         }
     }
 }
@@ -361,10 +370,10 @@ private fun PickDatabaseScreen(viewModel: SetupViewModel) {
             when {
                 viewModel.databases.isNotEmpty() -> Unit
                 viewModel.loadingDatabases -> MonoText("Looking for your databases…", 11.5f)
-                viewModel.databaseError == null -> HandText("Nothing is shared with it yet.", 19f, color = StillColors.ink3)
+                viewModel.databaseError == null -> HandText("Nothing is shared with it yet.", 19f, color = LocalInk.current.ink3)
             }
         }
-        viewModel.databaseError?.let { MonoText(it, 11f, color = StillColors.inkHigh, lineHeight = 1.6f) }
+        viewModel.databaseError?.let { MonoText(it, 11f, color = LocalInk.current.alert, lineHeight = 1.6f) }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -381,13 +390,14 @@ private fun PickDatabaseScreen(viewModel: SetupViewModel) {
 @Composable
 private fun FieldsBox(viewModel: SetupViewModel, database: String) {
     val schema = viewModel.schema
+    val outline = LocalInk.current.outlineDashed
     Column(
         Modifier
             .fillMaxWidth()
             .drawBehind {
                 val stroke = 1.2.dp.toPx()
                 drawRoundRect(
-                    color = StillColors.outlineDashed,
+                    color = outline,
                     topLeft = androidx.compose.ui.geometry.Offset(stroke / 2, stroke / 2),
                     size = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke),
                     cornerRadius = CornerRadius(2.dp.toPx()),
@@ -425,11 +435,11 @@ private fun FieldsBox(viewModel: SetupViewModel, database: String) {
                 TapTarget({ viewModel.pick(field) }, description, Modifier.requiredHeight(TapSize).padding(horizontal = 8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (property == null) {
-                            MonoText("Not found · choose", 11.5f, color = StillColors.inkHigh)
+                            MonoText("Not found · choose", 11.5f, color = LocalInk.current.alert)
                         } else {
                             HandText(property.shownName, 17f, maxLines = 1)
                         }
-                        InkIcon(StillIcons.ChevronDown, 14.dp, tint = if (property == null) StillColors.inkHigh else StillColors.ink, strokeWidth = 2f)
+                        InkIcon(StillIcons.ChevronDown, 14.dp, tint = if (property == null) LocalInk.current.alert else LocalInk.current.ink, strokeWidth = 2f)
                     }
                 }
             }
@@ -459,29 +469,31 @@ private fun FieldPickerSheet(field: Field, viewModel: SetupViewModel) {
                 .clickable(remember { MutableInteractionSource() }, indication = null, onClick = viewModel::closePicker)
                 .semantics { contentDescription = "Close without choosing" },
         )
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .fillMaxWidth()
-                .rotate(-0.6f)
-                .paperShadow(shape, Shadows.note)
-                .background(StillColors.card, shape)
-                .semantics { paneTitle = field.label }
-                .padding(top = 20.dp, bottom = 10.dp),
-        ) {
-            Overline(field.label, Modifier.padding(start = 14.dp, bottom = 8.dp))
-            if (candidates.isEmpty()) {
-                HandText("This database has no ${field.kind} property.", 18f, Modifier.padding(horizontal = 14.dp, vertical = 10.dp), color = StillColors.ink3)
-            }
-            Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
-                candidates.forEach { property ->
-                    RadioRow(property.id == chosen, { viewModel.choose(property.id) }, minHeight = 50.dp, dashed = true) {
-                        HandText(property.shownName, 19f, maxLines = 1)
-                    }
+        OnPaper {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
+                    .rotate(-0.6f)
+                    .paperShadow(shape, Shadows.note)
+                    .background(StillColors.card, shape)
+                    .semantics { paneTitle = field.label }
+                    .padding(top = 20.dp, bottom = 10.dp),
+            ) {
+                Overline(field.label, Modifier.padding(start = 14.dp, bottom = 8.dp))
+                if (candidates.isEmpty()) {
+                    HandText("This database has no ${field.kind} property.", 18f, Modifier.padding(horizontal = 14.dp, vertical = 10.dp), color = StillColors.ink3)
                 }
-                if (!field.required) {
-                    RadioRow(chosen == null, { viewModel.choose(null) }, minHeight = 50.dp, dashed = true) {
-                        HandText("Don't use", 19f, color = StillColors.ink3)
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                    candidates.forEach { property ->
+                        RadioRow(property.id == chosen, { viewModel.choose(property.id) }, minHeight = 50.dp, dashed = true) {
+                            HandText(property.shownName, 19f, maxLines = 1)
+                        }
+                    }
+                    if (!field.required) {
+                        RadioRow(chosen == null, { viewModel.choose(null) }, minHeight = 50.dp, dashed = true) {
+                            HandText("Don't use", 19f, color = StillColors.ink3)
+                        }
                     }
                 }
             }
@@ -500,6 +512,7 @@ private val Field.kind: String
 @Composable
 private fun ChooseLookScreen(viewModel: SetupViewModel) {
     val handFont by viewModel.handFont.collectAsStateWithLifecycle()
+    val palette by viewModel.palette.collectAsStateWithLifecycle()
     StepPage(
         title = "Choose a look",
         intro = "You can change this any time in Settings.",
@@ -511,17 +524,17 @@ private fun ChooseLookScreen(viewModel: SetupViewModel) {
         bodyPadding = PaddingValues(start = 24.dp, top = 18.dp, end = 24.dp, bottom = 16.dp),
         spacing = 22,
     ) {
-        LookPreview()
+        LookPreview((palette ?: Palette.Canary).page)
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Overline("Color palette")
-            PaletteSwatches(compact = true)
+            PaletteSwatches(palette, viewModel::setPalette, compact = true)
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Overline("Typography", Modifier.padding(bottom = 6.dp))
             HandFont.entries.forEach { font ->
                 RadioRow(font == handFont, { viewModel.setHandFont(font) }, minHeight = 52.dp) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        val style = handStyle(font.family, 22f)
+                        val style = handStyle(font.family, 22f, color = LocalInk.current.ink)
                         BasicText(font.title, Modifier.alignByBaseline().trimLineBox(rememberLineBoxTrim(style)), style = style)
                         MonoText(font.fontName, 11f, Modifier.alignByBaseline(), letterSpacing = 0.06.em)
                     }
@@ -533,9 +546,9 @@ private fun ChooseLookScreen(viewModel: SetupViewModel) {
 
 private val PreviewBorder = 1.2.dp
 
-/** Two sample post-its on the page background, in the chosen face. */
+/** Two sample post-its on the chosen palette's page, in the chosen face. */
 @Composable
-private fun LookPreview() {
+private fun LookPreview(page: Page) {
     val shape = RoundedCornerShape(4.dp)
     Box(
         Modifier
@@ -543,41 +556,43 @@ private fun LookPreview() {
             // 168 inside its border, which the mockup's box adds to its size.
             .height(168.dp + PreviewBorder * 2)
             .clip(shape)
-            .dottedPaper()
-            .border(PreviewBorder, StillColors.ink.copy(alpha = 0.22f), shape)
+            .dottedPaper(page)
+            .border(PreviewBorder, LocalInk.current.ink.copy(alpha = 0.22f), shape)
             .padding(PreviewBorder)
             .semantics { contentDescription = "Preview" },
     ) {
-        Column(
-            modifier = Modifier
-                .padding(start = 52.dp, top = 92.dp, end = 20.dp)
-                .fillMaxWidth()
-                .rotate(1.6f)
-                .paperShadow(PreviewPostItShape, Shadows.previewPostIt)
-                .background(StillColors.apricot, PreviewPostItShape)
-                .heightIn(min = 58.dp)
-                .padding(horizontal = 14.dp, vertical = 9.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
-        ) {
-            HandText("Call grandma", 19f)
-            MonoText("19:00 · Personal · !!", 11f)
-        }
-        Row(
-            modifier = Modifier
-                .padding(start = 20.dp, top = 18.dp, end = 46.dp)
-                .fillMaxWidth()
-                .rotate(-1f)
-                .paperShadow(PostItShape, Shadows.previewPostIt)
-                .background(StillColors.canary, PostItShape)
-                .heightIn(min = 62.dp)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            HandCircle(20.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                HandText("Water the plants", 20f)
-                MonoText("08:00 · Personal · !", 11f)
+        OnPaper {
+            Column(
+                modifier = Modifier
+                    .padding(start = 52.dp, top = 92.dp, end = 20.dp)
+                    .fillMaxWidth()
+                    .rotate(1.6f)
+                    .paperShadow(PreviewPostItShape, Shadows.previewPostIt)
+                    .background(StillColors.apricot, PreviewPostItShape)
+                    .heightIn(min = 58.dp)
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+            ) {
+                HandText("Call grandma", 19f)
+                MonoText("19:00 · Personal · !!", 11f)
+            }
+            Row(
+                modifier = Modifier
+                    .padding(start = 20.dp, top = 18.dp, end = 46.dp)
+                    .fillMaxWidth()
+                    .rotate(-1f)
+                    .paperShadow(PostItShape, Shadows.previewPostIt)
+                    .background(StillColors.canary, PostItShape)
+                    .heightIn(min = 62.dp)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                HandCircle(20.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    HandText("Water the plants", 20f)
+                    MonoText("08:00 · Personal · !", 11f)
+                }
             }
         }
     }

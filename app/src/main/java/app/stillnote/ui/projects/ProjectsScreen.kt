@@ -56,14 +56,16 @@ import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
-import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.cardHeader
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
 import app.stillnote.ui.components.ruledPaper
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.theme.AddPadShape
+import app.stillnote.ui.theme.LocalInk
 import app.stillnote.ui.theme.MenuSlipShape
 import app.stillnote.ui.theme.MiniPostItShape
+import app.stillnote.ui.theme.OnPaper
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.miniPostItTilt
 import app.stillnote.ui.theme.paper
@@ -172,46 +174,48 @@ private fun Hint(text: String) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        HandText(text, 18f, Modifier.padding(horizontal = 24.dp, vertical = 30.dp), color = StillColors.ink3)
+        HandText(text, 18f, Modifier.padding(horizontal = 24.dp, vertical = 30.dp), color = LocalInk.current.ink3)
     }
 }
 
 @Composable
 private fun ProjectCard(project: Project, tilt: Float, onComplete: (Task) -> Unit, onEdit: (Task) -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(2.dp)
-    Column(
-        modifier
-            .fillMaxWidth()
-            .rotate(tilt)
-            .paperShadow(shape, Shadows.indexCard)
-            .clip(shape)
-            .ruledPaper(every = 24.dp)
-            .semantics { contentDescription = project.name },
-    ) {
-        Row(
-            modifier = Modifier
+    OnPaper {
+        Column(
+            modifier
                 .fillMaxWidth()
-                .height(54.dp)
-                .cardHeader()
-                .padding(start = 16.dp, top = 12.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .rotate(tilt)
+                .paperShadow(shape, Shadows.indexCard)
+                .clip(shape)
+                .ruledPaper(every = 24.dp)
+                .semantics { contentDescription = project.name },
         ) {
-            HandText(project.name, 25f, Modifier.weight(1f).alignByBaseline(), weight = FontWeight.Bold, lineHeight = 1.3f, maxLines = 1)
-            MonoText("${project.open.size} open · ${project.done} done", 11.5f, Modifier.alignByBaseline(), letterSpacing = 0.04.em)
-        }
-        if (project.open.isEmpty()) {
-            HandText("Nothing left here.", 18f, Modifier.padding(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 18.dp), color = StillColors.ink3, lineHeight = 1.3f)
-        } else {
-            // About four notes show; the fifth peeks out to say the card scrolls.
-            Column(
+            Row(
                 modifier = Modifier
-                    .heightIn(max = 258.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(start = 14.dp, top = 12.dp, end = 14.dp, bottom = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(9.dp),
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .cardHeader()
+                    .padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                project.open.forEachIndexed { index, task ->
-                    MiniPostIt(task, miniPostItTilt(index), onComplete = { onComplete(task) }, onEdit = { onEdit(task) })
+                HandText(project.name, 25f, Modifier.weight(1f).alignByBaseline(), weight = FontWeight.Bold, lineHeight = 1.3f, maxLines = 1)
+                MonoText("${project.open.size} open · ${project.done} done", 11.5f, Modifier.alignByBaseline(), letterSpacing = 0.04.em)
+            }
+            if (project.open.isEmpty()) {
+                HandText("Nothing left here.", 18f, Modifier.padding(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 18.dp), color = StillColors.ink3, lineHeight = 1.3f)
+            } else {
+                // About four notes show; the fifth peeks out to say the card scrolls.
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 258.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(start = 14.dp, top = 12.dp, end = 14.dp, bottom = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    project.open.forEachIndexed { index, task ->
+                        MiniPostIt(task, miniPostItTilt(index), onComplete = { onComplete(task) }, onEdit = { onEdit(task) })
+                    }
                 }
             }
         }
@@ -259,9 +263,11 @@ private fun MenuSlip(label: String, icon: IconPaths, tilt: Float, ruled: Boolean
             .heightIn(min = 52.dp)
             .padding(start = 16.dp, end = 22.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            InkIcon(icon, 22.dp, strokeWidth = 1.7f)
-            HandText(label, 20f)
+        OnPaper {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                InkIcon(icon, 22.dp, strokeWidth = 1.7f)
+                HandText(label, 20f)
+            }
         }
     }
 }
@@ -280,6 +286,6 @@ private fun AddMenuPad(open: Boolean, onClick: () -> Unit, modifier: Modifier = 
             .background(StillColors.canary, AddPadShape)
             .inkBorder(1.6.dp, StillColors.ink, AddPadShape),
     ) {
-        InkIcon(StillIcons.Add, 26.dp, Modifier.rotate(turn), strokeWidth = 2f)
+        OnPaper { InkIcon(StillIcons.Add, 26.dp, Modifier.rotate(turn), strokeWidth = 2f) }
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.HandFont
+import app.stillnote.data.Palette
 import app.stillnote.data.ReminderSettings
 import app.stillnote.data.SettingsStore
 import app.stillnote.data.notion.NotionAccount
@@ -28,6 +29,13 @@ class SettingsViewModel(
 ) : ViewModel() {
     val handFont: StateFlow<HandFont?> =
         settings.handFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val palette: StateFlow<Palette?> =
+        settings.palette.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun setPalette(palette: Palette) {
+        viewModelScope.launch { settings.setPalette(palette) }
+    }
 
     /** The connected database's name, or null without Notion. */
     val database: StateFlow<String?> =

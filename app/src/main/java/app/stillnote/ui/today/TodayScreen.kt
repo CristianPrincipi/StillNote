@@ -44,10 +44,12 @@ import app.stillnote.ui.components.StruckHandText
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
 import app.stillnote.ui.components.dashedBottomBorder
-import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.theme.AddPadShape
+import app.stillnote.ui.theme.LocalInk
+import app.stillnote.ui.theme.OnPaper
 import app.stillnote.ui.theme.PostItShape
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.paper
@@ -189,32 +191,34 @@ private fun TaskPostIt(
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .rotate(tilt)
-            .paperShadow(PostItShape, Shadows.postIt)
-            .background(task.priority.paper, PostItShape)
-            .tapToEdit(onEdit)
-            .heightIn(min = 70.dp)
-            .padding(start = 4.dp, top = 10.dp, end = 2.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TapTarget(onDone, "Mark ${task.title} as done", Modifier.size(TapSize)) {
-            HandCircle(22.dp)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+    OnPaper {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .rotate(tilt)
+                .paperShadow(PostItShape, Shadows.postIt)
+                .background(task.priority.paper, PostItShape)
+                .tapToEdit(onEdit)
+                .heightIn(min = 70.dp)
+                .padding(start = 4.dp, top = 10.dp, end = 2.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            HandText(task.title, 21f)
-            val meta = task.meta()
-            if (meta.isNotEmpty()) MonoText(meta, 11.5f, letterSpacing = 0.03.em)
-        }
-        TapTarget(onDelete, "Delete ${task.title}", Modifier.size(TapSize)) {
-            InkIcon(StillIcons.Trash, 19.dp, tint = StillColors.ink2)
+            TapTarget(onDone, "Mark ${task.title} as done", Modifier.size(TapSize)) {
+                HandCircle(22.dp)
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                HandText(task.title, 21f)
+                val meta = task.meta()
+                if (meta.isNotEmpty()) MonoText(meta, 11.5f, letterSpacing = 0.03.em)
+            }
+            TapTarget(onDelete, "Delete ${task.title}", Modifier.size(TapSize)) {
+                InkIcon(StillIcons.Trash, 19.dp, tint = StillColors.ink2)
+            }
         }
     }
 }
@@ -225,7 +229,7 @@ private fun DoneRow(task: Task, onNotDone: () -> Unit, onDelete: () -> Unit, onE
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 53.dp)
-            .dashedBottomBorder()
+            .dashedBottomBorder(LocalInk.current.ruleDashed)
             .tapToEdit(onEdit)
             .padding(start = 4.dp, end = 2.dp, bottom = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -241,7 +245,7 @@ private fun DoneRow(task: Task, onNotDone: () -> Unit, onDelete: () -> Unit, onE
                 .padding(horizontal = 2.dp),
         )
         TapTarget(onDelete, "Delete ${task.title}", Modifier.size(TapSize)) {
-            InkIcon(StillIcons.Trash, 18.dp, tint = StillColors.ink2)
+            InkIcon(StillIcons.Trash, 18.dp, tint = LocalInk.current.ink2)
         }
     }
 }
@@ -249,17 +253,19 @@ private fun DoneRow(task: Task, onNotDone: () -> Unit, onDelete: () -> Unit, onE
 /** The "+" drawn as the top sheet of a pad of post-its. */
 @Composable
 private fun AddPad(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    TapTarget(
-        onClick = onClick,
-        description = "Add a task",
-        modifier = modifier
-            .size(60.dp)
-            .rotate(-4f)
-            .paperShadow(AddPadShape, Shadows.addPad)
-            .background(StillColors.canary, AddPadShape)
-            .inkBorder(1.6.dp, StillColors.ink, AddPadShape),
-    ) {
-        InkIcon(StillIcons.Add, 26.dp, strokeWidth = 2f)
+    OnPaper {
+        TapTarget(
+            onClick = onClick,
+            description = "Add a task",
+            modifier = modifier
+                .size(60.dp)
+                .rotate(-4f)
+                .paperShadow(AddPadShape, Shadows.addPad)
+                .background(StillColors.canary, AddPadShape)
+                .inkBorder(1.6.dp, StillColors.ink, AddPadShape),
+        ) {
+            InkIcon(StillIcons.Add, 26.dp, strokeWidth = 2f)
+        }
     }
 }
 
@@ -270,27 +276,29 @@ private fun AddPad(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun PaperStrip(message: String, action: String, onAction: () -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(2.dp)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .rotate(-0.6f)
-            .paperShadow(shape, Shadows.postIt)
-            .background(StillColors.card, shape)
-            .heightIn(min = TapSize)
-            .padding(start = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        MonoText(message, 12f, Modifier.weight(1f), maxLines = 1)
-        TapTarget(onAction, description = null, Modifier.heightIn(min = TapSize).padding(horizontal = 12.dp)) {
-            HandText(
-                action,
-                19f,
-                Modifier
-                    .rotate(-2f)
-                    .background(StillColors.canary)
-                    .padding(horizontal = 6.dp),
-                weight = FontWeight.Bold,
-            )
+    OnPaper {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .rotate(-0.6f)
+                .paperShadow(shape, Shadows.postIt)
+                .background(StillColors.card, shape)
+                .heightIn(min = TapSize)
+                .padding(start = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MonoText(message, 12f, Modifier.weight(1f), maxLines = 1)
+            TapTarget(onAction, description = null, Modifier.heightIn(min = TapSize).padding(horizontal = 12.dp)) {
+                HandText(
+                    action,
+                    19f,
+                    Modifier
+                        .rotate(-2f)
+                        .background(StillColors.canary)
+                        .padding(horizontal = 6.dp),
+                    weight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

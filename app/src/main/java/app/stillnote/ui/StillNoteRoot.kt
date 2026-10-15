@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.stillnote.LaunchRequest
 import app.stillnote.StillNoteApp
+import app.stillnote.data.Palette
 import app.stillnote.reminders.notificationsAllowed
 import app.stillnote.ui.calendar.CalendarScreen
 import app.stillnote.ui.components.BottomNav
@@ -39,8 +40,10 @@ import app.stillnote.ui.settings.SettingsViewModel
 import app.stillnote.ui.setup.SetupFlow
 import app.stillnote.ui.setup.SetupViewModel
 import app.stillnote.ui.theme.LocalHandFont
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
+import app.stillnote.ui.theme.LocalPage
 import app.stillnote.ui.theme.family
+import app.stillnote.ui.theme.page
 import app.stillnote.ui.today.TodayScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -55,13 +58,16 @@ fun StillNoteRoot(launchRequest: MutableStateFlow<LaunchRequest?>) {
     val settings: SettingsViewModel = viewModel(factory = StillViewModels)
     val setup: SetupViewModel = viewModel(factory = StillViewModels)
     val handFont by settings.handFont.collectAsStateWithLifecycle()
+    val palette by settings.palette.collectAsStateWithLifecycle()
     val setupDone by app.settings.setupDone.collectAsStateWithLifecycle(initialValue = null)
+    val page = (palette ?: Palette.Canary).page
 
-    Box(Modifier.fillMaxSize().background(StillColors.paper)) {
-        // Wait for the saved choices, so the app never flashes the wrong face or the wrong screen.
+    Box(Modifier.fillMaxSize().background(page.ground)) {
+        // Wait for the saved choices, so the app never flashes the wrong face, page or screen.
         val font = handFont ?: return@Box
+        if (palette == null) return@Box
         val firstRun = !(setupDone ?: return@Box) && !app.demo
-        CompositionLocalProvider(LocalHandFont provides font.family) {
+        CompositionLocalProvider(LocalHandFont provides font.family, LocalPage provides page, LocalInk provides page.ink) {
             if (firstRun) SetupFlow(setup, onDone = {}) else MainScreens(settings, setup, launchRequest)
         }
     }

@@ -24,7 +24,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
 
 /** `[‹] value [›]`: the note's day, time and reminder, and the morning list's time in Settings. */
 @Composable
@@ -78,6 +78,7 @@ fun Stepper(
 /** A choice among a wrapping row of them: the note's project pills, and the reminder times in Settings. */
 @Composable
 fun Pill(name: String, selected: Boolean, onPick: () -> Unit) {
+    val ink = LocalInk.current
     // The pill is 44 tall, as in the mockup; its 48 dp touch target overflows the row.
     Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
         Box(
@@ -95,12 +96,12 @@ fun Pill(name: String, selected: Boolean, onPick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .height(44.dp)
-                    .background(if (selected) StillColors.ink else StillColors.card.copy(alpha = 0.45f), CircleShape)
-                    .border(1.4.dp, StillColors.ink, CircleShape)
+                    .background(if (selected) ink.ink else ink.wash, CircleShape)
+                    .border(1.4.dp, ink.ink, CircleShape)
                     .padding(horizontal = 17.4.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                HandText(name, 18f, color = if (selected) StillColors.canary else StillColors.ink, lineHeight = 1f, maxLines = 1)
+                HandText(name, 18f, color = if (selected) ink.onInk else ink.ink, lineHeight = 1f, maxLines = 1)
             }
         }
     }

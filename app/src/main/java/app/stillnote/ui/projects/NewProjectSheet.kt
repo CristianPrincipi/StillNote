@@ -58,6 +58,7 @@ import app.stillnote.ui.components.rememberLineBoxTrim
 import app.stillnote.ui.components.ruledPaper
 import app.stillnote.ui.components.trimLineBox
 import app.stillnote.ui.theme.LocalHandFont
+import app.stillnote.ui.theme.OnPaper
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.handStyle
 
@@ -103,58 +104,60 @@ fun NewProjectSheet(synced: Boolean, onCreate: (String) -> Unit, onDismiss: () -
                         }
                     },
             ) {
-                Column(Modifier.clip(shape).ruledPaper(every = 24.dp)) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .cardHeader()
-                            .padding(start = 20.dp, top = 26.dp, end = 18.dp, bottom = 1.2.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        MonoText("NEW PROJECT", 11f, letterSpacing = 0.16.em)
-                        val style = handStyle(LocalHandFont.current, 32f, FontWeight.Bold, lineHeight = 1.25f)
-                        BasicTextField(
-                            value = name,
-                            onValueChange = { name = it.replace('\n', ' ') },
+                OnPaper {
+                    Column(Modifier.clip(shape).ruledPaper(every = 24.dp)) {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                                .trimLineBox(rememberLineBoxTrim(style))
-                                .focusRequester(focus),
-                            textStyle = style,
-                            singleLine = true,
-                            cursorBrush = SolidColor(StillColors.ink),
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { create() }),
-                            decorationBox = { field ->
-                                Box {
-                                    if (name.isEmpty()) BasicText("Name it…", style = style.copy(color = StillColors.ink3))
-                                    field()
-                                }
-                            },
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, top = 12.dp, end = 18.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(22.dp),
-                    ) {
-                        MonoText(
-                            if (synced) "It gets its own card on this page, and syncs to your Notion projects." else "It gets its own card on this page.",
-                            11.5f,
-                            lineHeight = 24f / 11.5f,
-                        )
-                        TapTarget(
-                            onClick = create,
-                            description = "Create project",
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .size(52.dp)
-                                .background(StillColors.ink, CircleShape),
-                            enabled = name.isNotBlank(),
+                                .cardHeader()
+                                .padding(start = 20.dp, top = 26.dp, end = 18.dp, bottom = 1.2.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            InkIcon(StillIcons.Send, 22.dp, tint = StillColors.canary, strokeWidth = 2f)
+                            MonoText("NEW PROJECT", 11f, letterSpacing = 0.16.em)
+                            val style = handStyle(LocalHandFont.current, 32f, FontWeight.Bold, lineHeight = 1.25f)
+                            BasicTextField(
+                                value = name,
+                                onValueChange = { name = it.replace('\n', ' ') },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                                    .trimLineBox(rememberLineBoxTrim(style))
+                                    .focusRequester(focus),
+                                textStyle = style,
+                                singleLine = true,
+                                cursorBrush = SolidColor(StillColors.ink),
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { create() }),
+                                decorationBox = { field ->
+                                    Box {
+                                        if (name.isEmpty()) BasicText("Name it…", style = style.copy(color = StillColors.ink3))
+                                        field()
+                                    }
+                                },
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, top = 12.dp, end = 18.dp, bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(22.dp),
+                        ) {
+                            MonoText(
+                                if (synced) "It gets its own card on this page, and syncs to your Notion projects." else "It gets its own card on this page.",
+                                11.5f,
+                                lineHeight = 24f / 11.5f,
+                            )
+                            TapTarget(
+                                onClick = create,
+                                description = "Create project",
+                                modifier = Modifier
+                                    .align(Alignment.End)
+                                    .size(52.dp)
+                                    .background(StillColors.ink, CircleShape),
+                                enabled = name.isNotBlank(),
+                            ) {
+                                InkIcon(StillIcons.Send, 22.dp, tint = StillColors.canary, strokeWidth = 2f)
+                            }
                         }
                     }
                 }

@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import app.stillnote.ui.theme.OnPaper
 import app.stillnote.ui.theme.StillColors
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -115,11 +116,13 @@ fun PullToSync(
                 .inkBorder(1.6.dp, StillColors.ink, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            InkIcon(
-                StillIcons.Refresh,
-                20.dp,
-                Modifier.graphicsLayer { rotationZ = pulled.value / trigger * 270f + spin.value },
-            )
+            OnPaper {
+                InkIcon(
+                    StillIcons.Refresh,
+                    20.dp,
+                    Modifier.graphicsLayer { rotationZ = pulled.value / trigger * 270f + spin.value },
+                )
+            }
         }
     }
 }

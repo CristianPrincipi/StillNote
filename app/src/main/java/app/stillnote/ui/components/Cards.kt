@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import app.stillnote.ui.theme.LocalInk
+import app.stillnote.ui.theme.PaperInk
 import app.stillnote.ui.theme.StillColors
 
 /** Index-card paper: `card` with a pale blue rule on the last dp of every [every]. */
@@ -93,28 +96,31 @@ fun RadioRow(
     val shape = RoundedCornerShape(2.dp)
     val sheet = when {
         selected -> Modifier.rotate(tilt).paperShadow(shape, Shadows.postIt).background(StillColors.card, shape)
-        dashed -> Modifier.dashedBottomBorder()
+        dashed -> Modifier.dashedBottomBorder(LocalInk.current.ruleDashed)
         else -> Modifier
     }
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(sheet)
-            .selectable(
-                selected = selected,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.RadioButton,
-                onClick = onPick,
-            )
-            .heightIn(min = minHeight)
-            .padding(horizontal = 14.dp, vertical = verticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f), content = content)
-        HandCircle(22.dp) {
-            if (selected) Box(Modifier.size(10.dp).background(StillColors.ink, CircleShape))
+    // The chosen row is a sheet of card, so it takes the dark ink of paper, also on the Night page.
+    CompositionLocalProvider(LocalInk provides if (selected) PaperInk else LocalInk.current) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .then(sheet)
+                .selectable(
+                    selected = selected,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.RadioButton,
+                    onClick = onPick,
+                )
+                .heightIn(min = minHeight)
+                .padding(horizontal = 14.dp, vertical = verticalPadding),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f), content = content)
+            HandCircle(22.dp) {
+                if (selected) Box(Modifier.size(10.dp).background(LocalInk.current.ink, CircleShape))
+            }
         }
     }
 }
@@ -150,6 +156,6 @@ private fun ProgressSquare(filled: Boolean) {
     Box(
         Modifier
             .size(9.dp)
-            .then(if (filled) Modifier.background(StillColors.ink) else Modifier.inkBorder(1.2.dp, StillColors.ink, RoundedCornerShape(0.dp))),
+            .then(if (filled) Modifier.background(LocalInk.current.ink) else Modifier.inkBorder(1.2.dp, LocalInk.current.ink, RoundedCornerShape(0.dp))),
     )
 }
