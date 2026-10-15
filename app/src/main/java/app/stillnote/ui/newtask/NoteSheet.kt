@@ -86,6 +86,7 @@ import app.stillnote.ui.components.trimLineBox
 import app.stillnote.ui.theme.LocalHandFont
 import app.stillnote.ui.theme.MiniPostItShape
 import app.stillnote.ui.theme.NoteShape
+import app.stillnote.ui.theme.OnPaper
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.handStyle
 import app.stillnote.ui.theme.paper
@@ -115,7 +116,7 @@ fun NoteSheetOverlay(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier:
                 .semantics { contentDescription = "Close without saving" },
         )
         NotePlacement(top = draft.picker.noteTop()) {
-            NoteSheet(draft, viewModel, focus)
+            OnPaper { NoteSheet(draft, viewModel, focus) }
         }
     }
 }

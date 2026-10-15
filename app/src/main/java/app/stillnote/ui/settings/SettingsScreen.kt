@@ -50,20 +50,20 @@ import app.stillnote.ui.components.HandText
 import app.stillnote.ui.components.InkIcon
 import app.stillnote.ui.components.MonoText
 import app.stillnote.ui.components.Overline
+import app.stillnote.ui.components.PaletteSwatches
 import app.stillnote.ui.components.PaperPage
 import app.stillnote.ui.components.Pill
-import app.stillnote.ui.components.TokenField
-import app.stillnote.ui.components.TextLink
 import app.stillnote.ui.components.RadioRow
-import app.stillnote.ui.components.PaletteSwatches
 import app.stillnote.ui.components.ScreenTitle
 import app.stillnote.ui.components.Stepper
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
+import app.stillnote.ui.components.TextLink
+import app.stillnote.ui.components.TokenField
 import app.stillnote.ui.components.rememberLineBoxTrim
 import app.stillnote.ui.components.trimLineBox
-import app.stillnote.ui.theme.StillColors
+import app.stillnote.ui.theme.LocalInk
 import app.stillnote.ui.theme.family
 import app.stillnote.ui.theme.handStyle
 import app.stillnote.ui.theme.label
@@ -91,7 +91,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onConnectNo
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
             NotionSection(viewModel, onConnectNotion)
-            PaletteSection()
+            PaletteSection(viewModel)
             TypographySection(handFont, viewModel::setHandFont)
             RemindersSection(viewModel)
         }
@@ -148,7 +148,7 @@ private fun StatusRow(connected: Boolean, text: String, action: String, onAction
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (connected) DoneMark(16.dp, tickSize = 10.dp, tickStroke = 3.4f) else HandCircle(16.dp, stroke = 1.5.dp)
-            MonoText(text, 12f, color = StillColors.ink)
+            MonoText(text, 12f, color = LocalInk.current.ink)
         }
         // The pill is 44 tall, as in the mockup; its 48 dp touch target overflows the row.
         Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
@@ -156,23 +156,24 @@ private fun StatusRow(connected: Boolean, text: String, action: String, onAction
                 Box(
                     modifier = Modifier
                         .height(44.dp)
-                        .background(StillColors.ink, CircleShape)
+                        .background(LocalInk.current.ink, CircleShape)
                         .padding(horizontal = 22.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    MonoText(action, 13f, weight = FontWeight.Medium, color = StillColors.canary, letterSpacing = 0.08.em)
+                    MonoText(action, 13f, weight = FontWeight.Medium, color = LocalInk.current.onInk, letterSpacing = 0.08.em)
                 }
             }
         }
     }
 }
 
-/** Drawn as in the mockup but not wired up yet: the palettes are on hold, so Canary stays selected. */
+/** Canary, or Night for the dark mode. The mockup's Sage and Blush were dropped. */
 @Composable
-private fun PaletteSection() {
+private fun PaletteSection(viewModel: SettingsViewModel) {
+    val palette by viewModel.palette.collectAsStateWithLifecycle()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Overline("Color palette")
-        PaletteSwatches()
+        PaletteSwatches(palette, viewModel::setPalette)
     }
 }
 
@@ -189,7 +190,7 @@ private fun TypographySection(current: HandFont?, onPick: (HandFont) -> Unit) {
 @Composable
 private fun FontOption(font: HandFont, selected: Boolean, onPick: () -> Unit) {
     RadioRow(selected, onPick, minHeight = 66.dp, verticalPadding = 8.dp) {
-        val sample = handStyle(font.family, 21f, lineHeight = 1.25f)
+        val sample = handStyle(font.family, 21f, color = LocalInk.current.ink, lineHeight = 1.25f)
         BasicText("Water the plants", Modifier.trimLineBox(rememberLineBoxTrim(sample)), style = sample)
         MonoText(font.label, 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.08.em)
     }
@@ -255,14 +256,14 @@ private fun RemindersSection(viewModel: SettingsViewModel) {
                 at?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "Off",
                 30f,
                 weight = FontWeight.Medium,
-                color = StillColors.ink,
+                color = LocalInk.current.ink,
                 letterSpacing = 0.04.em,
                 lineHeight = 1.1f,
             )
             MonoText(if (at == null) " " else "EVERY DAY", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
         }
         if (!allowed && (rules.before != Reminder.None || rules.morningAt != null)) {
-            MonoText("Notifications are off for StillNote, so reminders can't show.", 12f, color = StillColors.inkHigh, lineHeight = 1.5f)
+            MonoText("Notifications are off for StillNote, so reminders can't show.", 12f, color = LocalInk.current.alert, lineHeight = 1.5f)
             TextLink(
                 "Turn them on",
                 onClick = {

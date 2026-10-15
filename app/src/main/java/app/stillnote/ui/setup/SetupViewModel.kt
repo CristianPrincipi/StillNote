@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stillnote.data.HandFont
+import app.stillnote.data.Palette
 import app.stillnote.data.SettingsStore
 import app.stillnote.data.notion.DataSource
 import app.stillnote.data.notion.Field
@@ -77,6 +78,13 @@ class SetupViewModel(
 
     val handFont: StateFlow<HandFont?> =
         settings.handFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val palette: StateFlow<Palette?> =
+        settings.palette.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun setPalette(palette: Palette) {
+        viewModelScope.launch { settings.setPalette(palette) }
+    }
 
     private val mapping: PropertyMapping? get() = schema?.let { PropertyMapping.from(it, choices) }
     val canContinue: Boolean get() = mapping != null

@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import app.stillnote.ui.theme.LocalInk
+import app.stillnote.ui.theme.LocalPage
 import app.stillnote.ui.theme.StillColors
 
 enum class Tab(val label: String, val icon: IconPaths) {
@@ -57,13 +59,14 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
 
 @Composable
 private fun NavBar(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
+    val ink = LocalInk.current
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(StillColors.paper)
+            .background(LocalPage.current.ground)
             .drawBehind {
                 val y = 0.5.dp.toPx()
-                drawLine(StillColors.rule, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+                drawLine(ink.rule, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
             }
             // Not safeDrawing: that includes the keyboard, and the nav must stay put behind the new-task note.
             .windowInsetsPadding(
@@ -74,7 +77,7 @@ private fun NavBar(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = M
     ) {
         Tab.entries.forEach { tab ->
             val selected = tab == current
-            val color = if (selected) StillColors.ink else StillColors.ink2
+            val color = if (selected) ink.ink else ink.ink2
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -94,7 +97,7 @@ private fun NavBar(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = M
                     text = tab.label.uppercase(),
                     size = 10.5f,
                     modifier = Modifier
-                        .then(if (selected) Modifier.rotate(-2f).background(StillColors.canary) else Modifier)
+                        .then(if (selected) Modifier.rotate(-2f).background(ink.highlight) else Modifier)
                         .padding(horizontal = 7.dp, vertical = 1.dp),
                     weight = if (selected) FontWeight.Medium else FontWeight.Normal,
                     color = color,

@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,12 +52,14 @@ import app.stillnote.ui.components.Shadows
 import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
-import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.components.dashedBottomBorder
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
+import app.stillnote.ui.components.tapToEdit
 import app.stillnote.ui.theme.DayPostItShape
 import app.stillnote.ui.theme.HandDrawnCircle
+import app.stillnote.ui.theme.LocalInk
+import app.stillnote.ui.theme.PaperInk
 import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.paper
 import java.time.LocalDate
@@ -154,37 +157,41 @@ private fun DayCellView(cell: DayCell, onSelect: () -> Unit, modifier: Modifier 
         .rotate(-2f)
         .paperShadow(DayPostItShape, Shadows.miniPostIt)
         .background(StillColors.canary, DayPostItShape)
-    Column(
-        modifier = modifier
-            .height(54.dp)
-            .then(selectedPaper)
-            .selectable(
-                selected = cell.selected,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = cell.inMonth,
-                onClick = onSelect,
-            )
-            .clearAndSetSemantics { contentDescription = cell.description() }
-            .padding(top = 5.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .then(if (cell.isToday) Modifier.inkBorder(1.6.dp, StillColors.ink, HandDrawnCircle) else Modifier),
-            contentAlignment = Alignment.Center,
+    // The selected day is a canary post-it, so it keeps the dark ink of paper on the Night page.
+    val ink = if (cell.selected) PaperInk else LocalInk.current
+    CompositionLocalProvider(LocalInk provides ink) {
+        Column(
+            modifier = modifier
+                .height(54.dp)
+                .then(selectedPaper)
+                .selectable(
+                    selected = cell.selected,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    enabled = cell.inMonth,
+                    onClick = onSelect,
+                )
+                .clearAndSetSemantics { contentDescription = cell.description() }
+                .padding(top = 5.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            MonoText(
-                cell.date.dayOfMonth.toString(),
-                14f,
-                weight = if (cell.isToday) FontWeight.Medium else FontWeight.Normal,
-                color = if (cell.inMonth) StillColors.ink else StillColors.inkDisabled,
-            )
-        }
-        Row(Modifier.height(7.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            cell.squares.forEach { done -> TaskSquare(done, 7.dp) }
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .then(if (cell.isToday) Modifier.inkBorder(1.6.dp, ink.ink, HandDrawnCircle) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
+                MonoText(
+                    cell.date.dayOfMonth.toString(),
+                    14f,
+                    weight = if (cell.isToday) FontWeight.Medium else FontWeight.Normal,
+                    color = if (cell.inMonth) ink.ink else ink.inkDisabled,
+                )
+            }
+            Row(Modifier.height(7.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                cell.squares.forEach { done -> TaskSquare(done, 7.dp) }
+            }
         }
     }
 }
@@ -195,7 +202,7 @@ private fun TaskSquare(done: Boolean, size: Dp) {
     Box(
         Modifier
             .size(size)
-            .then(if (done) Modifier.background(StillColors.ink) else Modifier.border(1.2.dp, StillColors.ink)),
+            .then(if (done) Modifier.background(LocalInk.current.ink) else Modifier.border(1.2.dp, LocalInk.current.ink)),
     )
 }
 
@@ -210,6 +217,7 @@ private fun Legend(done: Boolean, label: String) {
 @Composable
 private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
     val day = state.selected
+    val ink = LocalInk.current
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier
@@ -217,7 +225,7 @@ private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
                 .drawBehind {
                     val stroke = 1.5.dp.toPx()
                     val y = size.height - stroke / 2
-                    drawLine(StillColors.ink, Offset(0f, y), Offset(size.width, y), stroke)
+                    drawLine(ink.ink, Offset(0f, y), Offset(size.width, y), stroke)
                 }
                 .padding(start = 6.dp, end = 4.dp, bottom = 5.5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -233,7 +241,7 @@ private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
             }
         }
         if (day != null && state.selectedTasks.isEmpty()) {
-            HandText("Nothing written down.", 19f, Modifier.padding(horizontal = 6.dp, vertical = 14.dp), color = StillColors.ink3)
+            HandText("Nothing written down.", 19f, Modifier.padding(horizontal = 6.dp, vertical = 14.dp), color = ink.ink3)
         }
         Column {
             state.selectedTasks.forEach { task ->
@@ -245,11 +253,12 @@ private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
 
 @Composable
 private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
+    val ink = LocalInk.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 47.dp)
-            .dashedBottomBorder()
+            .dashedBottomBorder(ink.ruleDashed)
             .tapToEdit(onEdit)
             .padding(start = 6.dp, end = 6.dp, bottom = 1.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -264,7 +273,7 @@ private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
             text = task.title,
             size = 18f,
             modifier = Modifier.weight(1f),
-            color = if (task.done) StillColors.ink3 else StillColors.ink,
+            color = if (task.done) ink.ink3 else ink.ink,
             decoration = if (task.done) TextDecoration.LineThrough else null,
         )
         MonoText(task.dayMeta(missed), 11f, letterSpacing = 0.04.em)
@@ -273,7 +282,7 @@ private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
                 .size(12.dp)
                 .rotate(-4f)
                 .background(task.priority.paper)
-                .border(1.dp, StillColors.ink)
+                .border(1.dp, ink.ink)
                 .semantics { contentDescription = task.priority.description() },
         )
     }

@@ -25,9 +25,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.isUnspecified
+import app.stillnote.ui.theme.LocalInk
 import kotlin.math.roundToInt
 import app.stillnote.ui.theme.LocalHandFont
-import app.stillnote.ui.theme.StillColors
 import app.stillnote.ui.theme.handStyle
 import app.stillnote.ui.theme.monoStyle
 
@@ -61,7 +61,7 @@ fun HandText(
     size: Float,
     modifier: Modifier = Modifier,
     weight: FontWeight = FontWeight.Normal,
-    color: Color = StillColors.ink,
+    color: Color = LocalInk.current.ink,
     lineHeight: Float = 1.2f,
     decoration: TextDecoration? = null,
     maxLines: Int = Int.MAX_VALUE,
@@ -83,7 +83,7 @@ fun MonoText(
     size: Float,
     modifier: Modifier = Modifier,
     weight: FontWeight = FontWeight.Normal,
-    color: Color = StillColors.ink2,
+    color: Color = LocalInk.current.ink2,
     letterSpacing: TextUnit = 0.em,
     lineHeight: Float? = null,
     textAlign: TextAlign = TextAlign.Start,
@@ -106,7 +106,7 @@ fun Overline(text: String, modifier: Modifier = Modifier, size: Float = 11f, wei
 }
 
 /**
- * A 46 sp screen title. With [highlighted], it sits on a canary highlighter band covering
+ * A 46 sp screen title. With [highlighted], it sits on a highlighter band covering
  * 58–90% of the font's own height, reaching 6 dp past the text on each side. The setup titles
  * are the only ones the mockups don't tighten, so they pass a [letterSpacing] of zero.
  */
@@ -118,7 +118,8 @@ fun ScreenTitle(
     highlighted: Boolean = false,
     letterSpacing: TextUnit = (-0.01).em,
 ) {
-    val style = handStyle(LocalHandFont.current, size, FontWeight.Bold, lineHeight = 1.15f)
+    val ink = LocalInk.current
+    val style = handStyle(LocalHandFont.current, size, FontWeight.Bold, ink.ink, lineHeight = 1.15f)
         .copy(letterSpacing = letterSpacing)
     val measurer = rememberTextMeasurer()
     val band = if (!highlighted) Modifier else Modifier.drawWithCache {
@@ -127,7 +128,7 @@ fun ScreenTitle(
         val reach = 6.dp.toPx()
         onDrawBehind {
             drawRect(
-                color = StillColors.canary,
+                color = ink.highlight,
                 topLeft = Offset(-reach, fontTop + 0.58f * fontHeight),
                 size = Size(this.size.width + 2 * reach, 0.32f * fontHeight),
             )
@@ -149,7 +150,7 @@ fun StruckHandText(
     text: String,
     size: Float,
     modifier: Modifier = Modifier,
-    color: Color = StillColors.ink3,
+    color: Color = LocalInk.current.ink3,
 ) {
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
     val style = handStyle(LocalHandFont.current, size, color = color)

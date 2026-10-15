@@ -242,6 +242,25 @@ def main():
     close_sheet()
     tap("TASKS")
 
+    # Night, the dark mode. No mockup draws it, so these are only for looking at; back to Canary after.
+    tap("Settings")
+    tap("Night")
+    shot("m5-night-settings")
+    back()
+    shot("m5-night-today")
+    tap_task("Reply to Marco about Friday")
+    shot("m5-night-edit-task")
+    close_sheet()
+    tap("CALENDAR")
+    shot("m5-night-calendar")
+    tap("PROJECTS")
+    wait_for_label("Mark Draft the Q4 plan as done")
+    shot("m5-night-projects")
+    tap("TASKS")
+    tap("Settings")
+    tap("Canary")
+    back()
+
     # The first-run screens and Settings are compared by tools/notion_e2e.py, which needs a fake Notion.
     for name in ("05-today", "06-new-task", "07-new-task-date-time", "08-new-task-priority", "09-calendar",
                  "10-projects", "11-projects-add-menu", "12-new-task-project", "13-new-project"):

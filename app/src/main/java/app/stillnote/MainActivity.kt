@@ -9,15 +9,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import app.stillnote.ui.StillNoteRoot
+import app.stillnote.ui.theme.Page
+import app.stillnote.ui.theme.page
 import app.stillnote.widget.TodayWidgetReceiver
+import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     /** What a tap on the widget or a notification asked for, until the screens have shown it. */
@@ -38,6 +42,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
         super.onCreate(savedInstanceState)
         setContent { StillNoteRoot(launchRequest) }
+
+        // Light or dark bars, and a window to match the page behind them.
+        lifecycleScope.launch { app.settings.palette.collect { showPage(it.page) } }
 
         // While the app is on screen, keep "today" right and pick up changes made in Notion.
         lifecycleScope.launch {
@@ -64,6 +71,12 @@ class MainActivity : ComponentActivity() {
         val request = LaunchRequest.from(intent) ?: return
         if (request is LaunchRequest.EditTask) (application as StillNoteApp).reminders.notifications.cancel(request.taskId)
         launchRequest.value = request
+    }
+
+    private fun showPage(page: Page) {
+        val bars = if (page.dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+        window.setBackgroundDrawable(page.ground.toArgb().toDrawable())
     }
 
     /** Debug builds only: asks the launcher to place the widget, for tools/screens.py. */

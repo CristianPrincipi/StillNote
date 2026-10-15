@@ -33,10 +33,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.stillnote.ui.theme.LocalPage
+import app.stillnote.ui.theme.Page
 import app.stillnote.ui.theme.StillColors
 
 /** The dotted notebook page: 1 dp dots every 22 dp, counted from [top] so they line up under the status bar. */
-fun Modifier.dottedPaper(top: Dp = 0.dp): Modifier = drawWithCache {
+fun Modifier.dottedPaper(page: Page, top: Dp = 0.dp): Modifier = drawWithCache {
     val step = 22.dp.toPx()
     val (width, height) = size
     val dots = buildList {
@@ -52,8 +54,8 @@ fun Modifier.dottedPaper(top: Dp = 0.dp): Modifier = drawWithCache {
     }
     val diameter = 2.4.dp.toPx()
     onDrawBehind {
-        drawRect(StillColors.paper)
-        drawPoints(dots, PointMode.Points, StillColors.dot, strokeWidth = diameter, cap = StrokeCap.Round)
+        drawRect(page.ground)
+        drawPoints(dots, PointMode.Points, page.dot, strokeWidth = diameter, cap = StrokeCap.Round)
     }
 }
 
@@ -64,13 +66,13 @@ fun PaperPage(modifier: Modifier = Modifier, content: @Composable ColumnScope.()
     Column(
         modifier
             .fillMaxSize()
-            .dottedPaper(top)
+            .dottedPaper(LocalPage.current, top)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
         content = content,
     )
 }
 
-/** A CSS-style dashed line along the bottom edge, inside the bounds. */
+/** A CSS-style dashed line along the bottom edge, inside the bounds. On the page, pass the page's [color]. */
 fun Modifier.dashedBottomBorder(color: Color = StillColors.ruleDashed, width: Dp = 1.dp): Modifier = drawBehind {
     val stroke = width.toPx()
     val y = size.height - stroke / 2

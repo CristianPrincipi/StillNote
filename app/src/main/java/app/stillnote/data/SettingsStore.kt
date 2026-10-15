@@ -16,6 +16,12 @@ enum class HandFont(val key: String) {
     Bookish("book"),
 }
 
+/** Settings → Color palette. Night is the dark mode. */
+enum class Palette(val key: String) {
+    Canary("canary"),
+    Night("night"),
+}
+
 /**
  * Settings → Reminders: [before] is how many minutes before a task's time to remind, or
  * [Reminder.None]; [morningAt] is the morning list's time in minutes after midnight, or null for off.
@@ -30,6 +36,7 @@ private val Context.settingsDataStore by preferencesDataStore("settings")
 
 class SettingsStore(private val context: Context) {
     private val handFontKey = stringPreferencesKey("hand_font")
+    private val paletteKey = stringPreferencesKey("palette")
     private val setupDoneKey = booleanPreferencesKey("setup_done")
     private val reminderBeforeKey = intPreferencesKey("reminder_before")
     private val morningListKey = intPreferencesKey("morning_list_at")
@@ -41,6 +48,14 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setHandFont(font: HandFont) {
         context.settingsDataStore.edit { it[handFontKey] = font.key }
+    }
+
+    val palette: Flow<Palette> = context.settingsDataStore.data.map { prefs ->
+        Palette.entries.firstOrNull { it.key == prefs[paletteKey] } ?: Palette.Canary
+    }
+
+    suspend fun setPalette(palette: Palette) {
+        context.settingsDataStore.edit { it[paletteKey] = palette.key }
     }
 
     /** False until the first-run flow has been finished once. */

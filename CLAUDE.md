@@ -50,8 +50,9 @@ Widget:
 
 Look:
 
-- **Palettes:** default colours only for now. The swatches in setup and Settings are drawn but do nothing, and Canary stays selected.
-- **Dark mode, when it is added:** only the page goes dark (`#26231F`, dots `#3D3832`, light text and icons on the page). Post-its, cards and sheets keep their colours with dark ink.
+- **Palettes:** only Canary and Night, picked in setup or Settings, Canary by default. Sage and Blush were dropped, so mockups 04 and 14 show two swatches fewer; the two left keep the mockups' tile size. The phone's own dark theme makes no difference.
+- **Night is the dark mode:** only the page goes dark (`#26231F`, dots `#3D3832`), with light text, icons and status bar. Post-its, cards, the note, sheets and the selected Calendar day keep their colours and dark ink. The light ink isn't designed: `NightInk` steps from the paper colour down towards the page, the highlighter band is canary at 35%, and the main pill turns light with dark text.
+- **In code:** whatever sits on the page takes its colours from `LocalInk` (the text and icon components already do), never `StillColors.ink` and its kind. Anything drawn on paper wraps its content in `OnPaper`, which brings back the dark ink.
 
 Notion:
 
