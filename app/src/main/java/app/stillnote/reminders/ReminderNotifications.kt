@@ -98,6 +98,9 @@ class ReminderNotifications(private val context: Context) {
         manager.notify(tag, ID, notification)
     }
 
+    /** What a tap on the reminder's alarm clock opens, where Android shows the next alarm. */
+    fun openToday(): PendingIntent = open(LaunchRequest.Today)
+
     private fun edit(taskId: String) = open(LaunchRequest.EditTask(taskId))
 
     private fun open(request: LaunchRequest): PendingIntent =

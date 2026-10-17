@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -78,6 +79,10 @@ class CalendarViewModel(private val tasks: TaskRepository, private val clock: Ap
 
     fun select(date: LocalDate) {
         selected.value = date
+    }
+
+    fun setDone(task: Task, done: Boolean) {
+        viewModelScope.launch { tasks.setDone(task.id, done) }
     }
 
     /** Pulls the month on screen. */

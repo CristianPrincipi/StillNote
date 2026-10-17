@@ -114,4 +114,14 @@ class ReminderPlanTest {
         assertEquals("Today: 1 task at any time", morning.title())
         assertEquals("Today: 2 tasks at any time", morning.copy(tasks = listOf(task("a", null), task("b", null))).title())
     }
+
+    @Test
+    fun `an alarm clock only in the last 70 minutes, set by a wake-up that is early enough even an hour late`() {
+        assertEquals(Alarm.Clock(at("10:00")), alarmFor(at("10:00"), at("09:59")))
+        assertEquals(Alarm.WakeUp(at("08:50")), alarmFor(at("10:00"), at("08:49")))
+        assertEquals(Alarm.WakeUp(at("08:50")), alarmFor(at("10:00"), at("08:00", day = "2026-10-14")))
+        // On time, or an hour late at OnePlus's worst, the wake-up sets the alarm clock.
+        assertEquals(Alarm.Clock(at("10:00")), alarmFor(at("10:00"), at("08:50")))
+        assertEquals(Alarm.Clock(at("10:00")), alarmFor(at("10:00"), at("09:50")))
+    }
 }

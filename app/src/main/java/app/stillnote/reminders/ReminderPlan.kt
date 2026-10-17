@@ -69,6 +69,28 @@ class ReminderPlan(private val settings: ReminderSettings, private val zone: Zon
     }
 }
 
+/** The alarm that brings the next notice: an alarm clock on the notice itself, or a wake-up ahead of it. */
+sealed interface Alarm {
+    val at: Long
+
+    data class Clock(override val at: Long) : Alarm
+
+    /** An ordinary exact alarm, which only wakes the app to set the alarm clock. */
+    data class WakeUp(override val at: Long) : Alarm
+}
+
+/**
+ * OnePlus's OxygenOS lets an ordinary exact alarm from most apps come late by up to three quarters
+ * of the time left, an hour at most, and keeps only alarm clocks exact. Android shows an alarm
+ * clock as the phone's next alarm, so the notice at [next] only gets one in its last
+ * [ALARM_CLOCK_WITHIN]. Before that, a wake-up at the start of that stretch sets it; even an
+ * hour late, the wake-up comes 10 minutes before the notice.
+ */
+fun alarmFor(next: Long, now: Long): Alarm =
+    if (next - now <= ALARM_CLOCK_WITHIN) Alarm.Clock(next) else Alarm.WakeUp(next - ALARM_CLOCK_WITHIN)
+
+const val ALARM_CLOCK_WITHIN = 70 * ReminderPlan.MINUTE
+
 /** The task's date and time as epoch millis, or null if it has no time. */
 fun TaskRow.timeAt(zone: ZoneId): Long? {
     val minutes = minutes ?: return null
