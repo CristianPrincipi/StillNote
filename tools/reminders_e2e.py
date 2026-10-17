@@ -7,7 +7,8 @@ It wipes the app's data and uses the app without Notion. While it runs, the emul
 time is off and its clock jumps around today and tomorrow; both are put back at the end. It
 covers the permission prompt after the first task that will remind, a reminder at the default 10
 minutes, Later bringing it back at the task's time, Done from the notification, a task's own
-reminder and Edit, and the morning list. Screenshots go to screenshots/ as m4-*.png.
+reminder and Edit, and the morning list, and which alarm brings each: an alarm clock within 70
+minutes, otherwise a wake-up 70 minutes ahead. Screenshots go to screenshots/ as m4-*.png.
 """
 import os
 import re
@@ -70,6 +71,15 @@ def notifications():
     return found
 
 
+def alarm():
+    """("clock" or "wake-up", "HH:MM") for the app's reminder alarm, or None if it has none."""
+    for entry in re.split(r"\n    (?=\w+ #\d+: Alarm\{)", adb("shell", "dumpsys", "alarm")):
+        if f" {APP}}}" in entry.split("\n", 1)[0] and "REMINDER_ALARM" in entry:
+            when = re.search(r"origWhen=\d{4}-\d\d-\d\d (\d\d:\d\d)", entry)
+            return "clock" if "Alarm clock:" in entry else "wake-up", when.group(1) if when else ""
+    return None
+
+
 def notification(title, seconds=40):
     """The notification whose title is [title], once it shows, or None."""
     shown = []
@@ -117,6 +127,7 @@ try:
     tap("Save task")
     expect(on_screen("Allow"), "saving the first task that will remind asks to allow notifications")
     tap("Allow")
+    expect(alarm() == ("clock", "09:50"), f"10 minutes off, the reminder gets an alarm clock ({alarm()})")
     set_clock(TODAY, "09:49", 50)
     shown = notification("Almost time: Call the plumber")
     expect(shown is not None and shown[1] == "10:00 · in 10 minutes", f"10 minutes before, it reminds ({shown})")
@@ -146,6 +157,10 @@ try:
 
     print("The morning list")
     add_task("Buy stamps", "Set date and time", "Next day", "Save task")
+    expect(alarm() == ("wake-up", "06:50"), f"tomorrow's, far off, gets a wake-up 70 minutes ahead ({alarm()})")
+    set_clock(TODAY + timedelta(days=1), "06:49", 30)
+    expect(alarm() == ("wake-up", "06:50"), f"still a wake-up 70 minutes and 30 seconds before ({alarm()})")
+    expect(wait_for(lambda: alarm() == ("clock", "08:00"), 60), f"which sets the alarm clock when it goes off ({alarm()})")
     set_clock(TODAY + timedelta(days=1), "07:59", 50)
     shown = notification("Today: 1 task at any time")
     expect(shown is not None and shown[1] == "Buy stamps", f"at 08:00 the next day it lists the untimed task ({shown})")

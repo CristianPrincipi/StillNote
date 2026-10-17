@@ -20,7 +20,7 @@ import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 
 /**
- * Keeps one exact alarm on the next reminder or morning list, and shows each when it comes.
+ * Keeps one alarm on the next reminder or morning list ([alarmFor]), and shows each when it comes.
  * [update] does both: it shows whatever has come due and hasn't been shown, then sets the alarm.
  * It runs after any change to the tasks or Settings while the app runs, when the alarm goes
  * off, and after a restart, an app update, or a change of clock or time zone.
@@ -79,10 +79,10 @@ class Reminders(
             shown.all.forEach { (key, at) -> if (at is Long && at < time - KEEP_SHOWN_MILLIS) remove(key) }
         }
         notifications.dropAllBut(open.mapTo(HashSet()) { it.id })
-        setAlarm(plan.next(open, time))
+        setAlarm(plan.next(open, time)?.let { alarmFor(it, time) })
     }
 
-    private fun setAlarm(at: Long?) {
+    private fun setAlarm(alarm: Alarm?) {
         val alarms = context.getSystemService(AlarmManager::class.java)
         val intent = PendingIntent.getBroadcast(
             context,
@@ -91,10 +91,11 @@ class Reminders(
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         when {
-            at == null -> alarms.cancel(intent)
+            alarm == null -> alarms.cancel(intent)
             // Granted with USE_EXACT_ALARM; an inexact alarm, a few minutes late at worst, if it ever isn't.
-            Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms() -> alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
-            else -> alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
+            Build.VERSION.SDK_INT >= 31 && !alarms.canScheduleExactAlarms() -> alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.at, intent)
+            alarm is Alarm.Clock -> alarms.setAlarmClock(AlarmManager.AlarmClockInfo(alarm.at, notifications.openToday()), intent)
+            else -> alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.at, intent)
         }
     }
 
