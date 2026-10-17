@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -82,7 +83,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, onEditTask: (Task) -> Unit, mod
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 MonthGrid(state, viewModel::select)
-                SelectedDay(state, onEditTask)
+                SelectedDay(state, viewModel::setDone, onEditTask)
             }
         }
     }
@@ -215,7 +216,7 @@ private fun Legend(done: Boolean, label: String) {
 }
 
 @Composable
-private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
+private fun SelectedDay(state: CalendarUiState, onSetDone: (Task, Boolean) -> Unit, onEdit: (Task) -> Unit) {
     val day = state.selected
     val ink = LocalInk.current
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -245,14 +246,19 @@ private fun SelectedDay(state: CalendarUiState, onEdit: (Task) -> Unit) {
         }
         Column {
             state.selectedTasks.forEach { task ->
-                DayTaskRow(task, missed = !task.done && day != null && day < state.today, onEdit = { onEdit(task) })
+                DayTaskRow(
+                    task = task,
+                    missed = !task.done && day != null && day < state.today,
+                    onToggle = { onSetDone(task, !task.done) },
+                    onEdit = { onEdit(task) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
+private fun DayTaskRow(task: Task, missed: Boolean, onToggle: () -> Unit, onEdit: () -> Unit) {
     val ink = LocalInk.current
     Row(
         modifier = Modifier
@@ -264,10 +270,15 @@ private fun DayTaskRow(task: Task, missed: Boolean, onEdit: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (task.done) {
-            DoneMark(18.dp, tickSize = 11.dp, tickStroke = 3.2f, Modifier.semantics { contentDescription = "Done" })
-        } else {
-            HandCircle(18.dp, Modifier.semantics { contentDescription = "Not done" }, stroke = 1.5.dp)
+        // Drawn 18 wide, as in the mockup; the touch target overflows it to 48.
+        Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+            TapTarget(
+                onClick = onToggle,
+                description = "Mark ${task.title} as ${if (task.done) "not done" else "done"}",
+                modifier = Modifier.requiredSize(TapSize),
+            ) {
+                if (task.done) DoneMark(18.dp, tickSize = 11.dp, tickStroke = 3.2f) else HandCircle(18.dp, stroke = 1.5.dp)
+            }
         }
         HandText(
             text = task.title,

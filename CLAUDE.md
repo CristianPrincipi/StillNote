@@ -26,6 +26,7 @@ Tasks:
 - **Editing a task:** tapping a post-it (on Today or a project card), a Done row or a Calendar day row opens the new-task note filled in, headed "EDIT TASK", in the task's colour and without the keyboard. Its chips show what the task has: a day other than today, a time, a priority other than None, a project, or "No date" for an undated one. The day can't go back before today, or before the task's own day if that is earlier. Send saves the changes, and an unchanged note saves nothing. Ticking and deleting stay on the post-it.
 - **Order on Today:** time ascending with untimed tasks last, then High to None.
 - **Order within a Calendar day:** done tasks first, then the Today order. This applies to the day's squares and to the day panel.
+- **Ticking on Calendar** (asked for by the user; not in the mockups): the circle on a day panel row ticks the task off, or back on, on any day, with a 48 dp target around the 18 dp circle. The rest of the row still opens the task to edit.
 - **No design yet, so no action:** tapping a project card's header.
 - **Stroke weights:** use the widths in DESIGN.md and the HTML (1.6 dp circles, and so on). The PNGs draw them thinner only because their renderer rounded fractional borders down to 1 px.
 - **App id** `app.stillnote`, **minSdk** 26. Debug builds are `app.stillnote.debug`, labelled "StillNote debug", so they install next to the release build; their classes stay in `app.stillnote`.
