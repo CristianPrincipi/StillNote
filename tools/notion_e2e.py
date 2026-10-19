@@ -326,7 +326,8 @@ def without_notion_then_connected():
         tap("Set date and time")
         tap("Next day")
         tap("30 minutes later")  # from "Any time" to the next half hour
-        shown = next(label for label in labels() if len(label) == 5 and label[2] == ":")
+        # The time is a button that opens the clock: "17:30, Afternoon. Open the clock".
+        shown = next(label[:5] for label in labels() if label.endswith(". Open the clock") and label[2] == ":")
         tap("Save task")
         expect(wait_for(lambda: task("Dentist") is not None), "a new task becomes a page")
         made = task("Dentist") or {}

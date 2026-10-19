@@ -24,6 +24,9 @@ Screens, in flow order:
 | 5 | Today (home) | `05-today.png` | `Main.dc.html` |
 | 6 | New task: empty note | `06-new-task.png` | `AddTask.dc.html` |
 | 7 | New task: date & time open | `07-new-task-date-time.png` | `AddTaskWhen.dc.html` |
+| 7a | New task: calendar picker | `07a-calendar-picker.png` | `AddTaskCalendar.dc.html` |
+| 7b | New task: clock picker, hours | `07b-clock-hours.png` | `AddTaskClock.dc.html` |
+| 7c | New task: clock picker, minutes | `07c-clock-minutes.png` | `AddTaskClockMinutes.dc.html` (mounts `AddTaskClock` with `mode="minutes"`) |
 | 8 | New task: priority open | `08-new-task-priority.png` | `AddTaskPriority.dc.html` |
 | 9 | Calendar | `09-calendar.png` | `Calendar.dc.html` |
 | 10 | Projects | `10-projects.png` | `Projects.dc.html` |
@@ -76,6 +79,7 @@ Units:
 | `indexBlue` | `#D3E2EA` | Ruled lines on index cards (every 24 dp) |
 | `scrim` | `rgba(42,38,33,0.42)` | Overlay behind sheets (the note, new project), plus a 1.5 dp blur of the screen behind |
 | `scrimLight` | `rgba(42,38,33,0.32)` | Overlay behind the Projects "+" menu (no blur) |
+| `scrimPicker` | `rgba(42,38,33,0.34)` | Overlay between the note and the calendar or clock card (no extra blur, so the note stays readable) |
 | `tape` | `rgba(252,250,245,0.58)` | The tape strip on top of notes and cards |
 
 Priority map (shared everywhere):
@@ -123,6 +127,10 @@ All four fonts are on Google Fonts under the OFL licence. Bundle them as resourc
 | Button label | DM Mono | 13–14 / 500, letter spacing 0.08em | |
 | Nav label | DM Mono | 10.5, UPPERCASE, letter spacing 0.14em | 500 when active |
 | Time stepper value | DM Mono | 30 / 500 | |
+| Calendar picker month | Kalam | 32 / 700 | Year overline above it |
+| Calendar picker day number | DM Mono | 15 | 500 for today and the selected day |
+| Clock picker time display | DM Mono | 46 / 500 | The part being edited sits on canary tape |
+| Clock face numbers | Kalam 20–21 (outer ring), DM Mono 13 (inner ring) | | |
 | Calendar day number | DM Mono | 14 | 500 for today |
 
 The Typography setting swaps the **Kalam** role for: Handwritten = Kalam (default), Typewriter = Courier Prime, Bookish = Newsreader. DM Mono labels stay as they are.
@@ -148,6 +156,10 @@ The Typography setting swaps the **Kalam** role for: Handwritten = Kalam (defaul
   | Mini post-its (cycle by index) | −0.6°, 0.5°, −0.3°, 0.7°, −0.5°, 0.4° |
   | Project cards | about ±0.6° |
   | Note | −1.2° |
+  | Calendar picker card | 0.8° |
+  | Clock picker card | −0.8° |
+  | Selected day in the calendar picker | −3° |
+  | Active part of the clock display | −2° |
   | New-project card | −1° |
   | "+" pad | −4° |
   | Menu slips | −2° and 1.5° |
@@ -207,7 +219,9 @@ These are line icons drawn like an ink pen: 1.6–1.8 dp stroke, round caps and 
 | **BottomNav** | Three equal tabs: **Calendar · Tasks · Projects**, with Tasks in the centre and Tasks as home. Background is `paper` with no dots and a 1 dp `rule` top border. Each tab is an icon over an uppercase mono label. The active tab is `ink` and its label sits on a `canary` tape tilted −2°. Inactive tabs are `ink2`. Don't use a pill indicator or ripple blob. |
 | **NoteSheet** (new task) | A post-it 342 wide (24 margins), tilted −1.2°, with a tape strip at the top centre (112×28, −3°). It floats over the scrim plus the blurred screen behind; tapping outside closes it without saving. It contains, in order: overline "NEW TASK"; a borderless multi-line text field (Kalam 27); a row of chips for the chosen date, priority and project; an expandable picker area below a dashed "tear line" that runs the full width of the note; and a bottom row with **three toggles** on the left (clock, flag, project) and the send button on the right. The active toggle gets an `rgba(42,38,33,.12)` rounded background. Only one picker is open at a time. The note is `canary` by default and takes the priority colour once a priority is picked. |
 | **Chip** | Pill with a 1.2 dp `ink` border, a translucent white fill (45%), mono 12, and a 14 dp icon. For example "Tomorrow, 18:00", "!!! High" or "Work". |
-| **Stepper** | Three columns: `[‹] value [›]`. Day: Kalam 28/700 value ("Today", "Tomorrow", then the weekday name) with a mono date underneath ("TUE 13 OCT"); you can't go before today. Time: mono 30/500 value in 30-minute steps, with a part-of-day label underneath (Morning before 12, Afternoon before 17, Evening before 21, otherwise Night). |
+| **Stepper** | Three columns: `[‹] value [›]`. Day: Kalam 28/700 value ("Today", "Tomorrow", then the weekday name) with a mono date underneath ("TUE 13 OCT"); you can't go before today. Time: mono 30/500 value in 30-minute steps, with a part-of-day label underneath (Morning before 12, Afternoon before 17, Evening before 21, otherwise Night). **The value itself is tappable.** It has a dashed fill-in-the-blank underline (1.5 dp, 50% `ink`): tapping the day opens the CalendarPicker, and tapping the time opens the ClockPicker. The arrows stay for quick ±1 day and ±30 min. |
+| **CalendarPicker** | A `card` sheet, 350 wide, tilted 0.8°, with tape. It lies over the note with `scrimPicker` between them; tapping the scrim closes it without changes. **Header** (index-card style, `indexRed` rule under it): year overline, month in Kalam 32/700, and ‹ › month arrows (‹ disabled on the current month; no limit going forward). **Grid:** weekday row `M T W T F S S` (Monday first); days of other months are left blank. Each day is a 46-tall cell: a mono 15 number inside a 30 dp hand-drawn ring (ring only on today), and under it up to three 5 dp outline squares showing how many open tasks already fall on that day, so the user can spot a free day. **Past days** are `inkDisabled` and can't be selected. The **selected day** becomes a small `canary` post-it (−3°, shadow). **Footer:** "NO DATE" text button on the left (clears the date); a primary pill on the right that names the choice: "Set Tue 13 Oct ✓". |
+| **ClockPicker** | A `card` sheet, 350 wide, tilted −0.8°, with tape; same scrim behaviour. Uses **24-hour** time. **Header:** overline "TIME · PICK THE HOUR" (or "… THE MINUTES"), with "NO TIME" on the right (clears the time). **Display:** "18 : 00" in mono 46/500. The hour and minute parts are separate buttons, and the one being edited sits on `canary` tape (−2°). A part-of-day label goes underneath. **Clock face:** a 272 dp hand-drawn circle (1.6 dp `ink`, `paper` fill), with a 2 dp `ink` hand from the centre and a 14 dp `canary` pin with an `ink` border in the middle. **Hours mode:** outer ring 12, 1–11 (Kalam 21, radius 106) and inner ring 00, 13–23 (mono 13, `ink2`, radius 68). The selected number gets a 40 dp `canary` hand-drawn circle with an `ink` border, and the hand points to it. Tapping an hour selects it and **switches to minutes mode automatically**. **Minutes mode:** outer ring 00–55 in steps of 5 (Kalam 20). Dragging the hand should also work, snapping to 1 minute while dragging and to 5 on release, so any minute can be set. **Footer:** "CANCEL" text button and a primary pill "Set 18:00 ✓". |
 | **PriorityPicker** | Four 54×54 mini post-its: High, Medium, Low, None. Each shows its handwritten name and marks below. The selected one gets a 2 dp `ink` border, a tick and a small tilt; the others get a 1.2 dp border at 40% `ink`. **Picking one recolours the whole note** (crossfade, 260 ms). |
 | **ProjectPicker** | A wrapping row of pills, at least 44 tall, with a 1.4 dp `ink` border and Kalam 18 text: each project plus "No project". The selected pill is `ink` with `canary` text; the others use a translucent white fill. |
 | **CalendarDayCell** | 54 tall. Mono day number inside a 30 dp hand-drawn ring; the ring is only drawn for today. Under it, up to four 7 dp squares, one per task: filled `ink` means done, an outline means not done. The selected day becomes a small `canary` post-it, tilted −2°, with a shadow. Days outside the month are `inkDisabled` and can't be selected. |
@@ -280,6 +294,9 @@ Shown once, before Today, until setup is finished. Every step has a **Back** lin
 
 1. **Empty:** the placeholder "What needs doing?" with the keyboard open. There are no chips yet.
 2. **Clock:** opens the date & time Stepper area below the tear line. The chip shows the result live ("Tomorrow, 18:00"). Tapping the clock again collapses it.
+   - For dates further away, tap the **day value** to open the **CalendarPicker** (screen 7a).
+   - For an exact time, tap the **time value** to open the **ClockPicker** (screens 7b–7c).
+   - When either picker closes, the Stepper and the chip update to the chosen values. "No date" and "No time" clear them, and the chip then shows only what's left (or disappears).
 3. **Flag:** opens the PriorityPicker. The note recolours to the chosen priority and a chip shows "!!! High".
 4. **Project:** opens the ProjectPicker and the chip shows the project name. When the note is opened from Projects → **New task**, this picker is **already open** and preselects the project the user was looking at most recently (it's Work in the mock).
 5. **Send:** creates the task (§5) and closes the note. The new post-it appears where it belongs (Today if it's due today, and in its project card). Don't allow saving with an empty title.
@@ -472,5 +489,6 @@ Ask the user before inventing any of these:
 - Tapping a project card header: a project detail page? Renaming or deleting a project? Reordering cards?
 - The full colour mapping for the Sage, Blush and Night palettes (Night is a dark theme).
 - Defaults for new tasks: today or no date? priority None?
+- Calendar and clock pickers: should a single tap close them (picking a day, or picking the minutes), instead of needing the "Set" button? The mockups use "Set".
 - Task order on Today.
 - Notifications or reminders: out of scope for now. The home-screen widget is designed (§4.7) but comes after the main app works.

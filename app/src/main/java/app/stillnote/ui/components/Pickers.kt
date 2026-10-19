@@ -2,7 +2,9 @@ package app.stillnote.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,14 +21,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.stillnote.ui.theme.LocalInk
 
-/** `[‹] value [›]`: the note's day, time and reminder, and the morning list's time in Settings. */
+/**
+ * `[‹] value [›]`: the note's day, time and reminder, and the morning list's time in Settings.
+ * With [onValueClick] the value is a button too, [valueLabel] is what a screen reader hears, and
+ * its main text should carry a [fillInUnderline].
+ */
 @Composable
 fun Stepper(
     onPrevious: () -> Unit,
@@ -36,6 +45,8 @@ fun Stepper(
     modifier: Modifier = Modifier,
     previousEnabled: Boolean = true,
     nextEnabled: Boolean = true,
+    onValueClick: (() -> Unit)? = null,
+    valueLabel: String = "",
     value: @Composable () -> Unit,
 ) {
     Row(
@@ -57,8 +68,18 @@ fun Stepper(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .semantics { liveRegion = LiveRegionMode.Polite },
+                .then(
+                    if (onValueClick == null) Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                    else Modifier
+                        .heightIn(min = 60.dp)
+                        .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onValueClick)
+                        .clearAndSetSemantics {
+                            contentDescription = valueLabel
+                            liveRegion = LiveRegionMode.Polite
+                        }
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             value()
         }
@@ -74,6 +95,10 @@ fun Stepper(
         }
     }
 }
+
+/** The dashed fill-in-the-blank line under a value that opens a picker, with 6 dp of room either side. */
+fun Modifier.fillInUnderline(ink: Color): Modifier =
+    dashedBottomBorder(ink.copy(alpha = 0.5f), 1.5.dp).padding(start = 6.dp, end = 6.dp, bottom = 1.5.dp)
 
 /** A choice among a wrapping row of them: the note's project pills, and the reminder times in Settings. */
 @Composable

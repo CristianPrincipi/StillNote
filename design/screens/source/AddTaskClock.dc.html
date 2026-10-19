@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New task: pick a time</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EEE4; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+    <dc-import name="AddTaskWhen" hint-size="390px,844px"></dc-import>
+  </div>
+
+  <a href="AddTaskWhen.dc.html" aria-label="Close the clock" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; background: rgba(42, 38, 33, 0.34)"></a>
+
+  <div role="dialog" aria-label="Pick a time" style="position: absolute; left: 20px; top: 132px; width: 350px; box-sizing: border-box; padding: 22px 16px 14px 16px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; background: #FCFAF5; border-radius: 2px 2px 3px 22px / 2px 2px 3px 8px; transform: rotate(-0.8deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75)">
+    <span aria-hidden="true" style="position: absolute; top: -13px; left: 132px; width: 88px; height: 26px; background: rgba(243, 238, 228, 0.8); border-left: 1px dashed rgba(42, 38, 33, 0.14); border-right: 1px dashed rgba(42, 38, 33, 0.14); transform: rotate(2deg)"></span>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 6px">
+      <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">{{modeLabel}}</span>
+      <a href="AddTaskWhen.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 6px; color: #4F463D; text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase">No time</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+      <div aria-live="polite" style="display: flex; align-items: center; gap: 2px">
+        <button type="button" onClick="{{showHours}}" aria-label="Hours, {{hh}}" aria-pressed="{{isHours}}" style="min-width: 76px; min-height: 58px; padding: 0 6px; border: 0; border-radius: 2px; background: {{hourBg}}; transform: rotate({{hourRot}}); color: #2A2621; font-family: 'DM Mono', ui-monospace, monospace; font-size: 46px; font-weight: 500; line-height: 1; cursor: pointer">{{hh}}</button>
+        <span aria-hidden="true" style="font-size: 40px; font-weight: 500; line-height: 1; padding-bottom: 6px">:</span>
+        <button type="button" onClick="{{showMinutes}}" aria-label="Minutes, {{mm}}" aria-pressed="{{isMinutes}}" style="min-width: 76px; min-height: 58px; padding: 0 6px; border: 0; border-radius: 2px; background: {{minBg}}; transform: rotate({{minRot}}); color: #2A2621; font-family: 'DM Mono', ui-monospace, monospace; font-size: 46px; font-weight: 500; line-height: 1; cursor: pointer">{{mm}}</button>
+      </div>
+      <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">{{part}}</span>
+    </div>
+
+    <div role="group" aria-label="{{dialLabel}}" style="position: relative; align-self: center; width: 272px; height: 272px; margin: 6px 0 4px 0; box-sizing: border-box; background: #F3EEE4; border: 1.6px solid #2A2621; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%">
+      <span aria-hidden="true" style="position: absolute; left: {{handLeft}}; top: {{handTop}}; width: 2px; height: {{handLen}}; background: #2A2621; border-radius: 1px; transform-origin: 50% 100%; transform: rotate({{handAngle}})"></span>
+      <sc-for list="{{marks}}" as="n" hint-placeholder-count="24">
+        <button type="button" onClick="{{n.pick}}" aria-label="{{n.aria}}" aria-pressed="{{n.selected}}" style="position: absolute; left: {{n.left}}; top: {{n.top}}; width: 40px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; border: 1.6px solid {{n.border}}; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; background: {{n.bg}}; color: {{n.color}}; font-family: {{n.family}}; font-size: {{n.size}}; line-height: 1; cursor: pointer">{{n.label}}</button>
+      </sc-for>
+      <span aria-hidden="true" style="position: absolute; left: 128px; top: 128px; width: 14px; height: 14px; box-sizing: border-box; background: #F7E08C; border: 1.6px solid #2A2621; border-radius: 50%"></span>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; padding-left: 4px">
+      <a href="AddTaskWhen.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; color: #4F463D; text-decoration: none; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase">Cancel</a>
+      <a href="AddTaskWhen.dc.html" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 22px 0 24px; border-radius: 999px; background: #2A2621; color: #F7E08C; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.06em">
+        Set {{hh}}:{{mm}}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+      </a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["hours","minutes"],"default":"hours"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: (props && props.mode) || 'hours', h: 18, m: 0 };
+  }
+  renderVals() {
+    const C = 136;
+    const OUTER = 106;
+    const INNER = 68;
+    const s = this.state || { mode: 'hours', h: 18, m: 0 };
+    const isHours = s.mode !== 'minutes';
+    const pad = (v) => String(v).padStart(2, '0');
+    const place = (r, i) => {
+      const a = (i * 30) * Math.PI / 180;
+      return { left: Math.round(C + r * Math.sin(a) - 20) + 'px', top: Math.round(C - r * Math.cos(a) - 20) + 'px' };
+    };
+    const marks = [];
+    if (isHours) {
+      for (let i = 0; i < 12; i++) {
+        const v = i === 0 ? 12 : i;
+        const sel = s.h === v;
+        const p = place(OUTER, i);
+        marks.push({ label: String(v), aria: 'Hour ' + v, selected: sel, left: p.left, top: p.top,
+          bg: sel ? '#F7E08C' : 'transparent', border: sel ? '#2A2621' : 'transparent', color: '#2A2621',
+          family: "'Kalam', 'Segoe Print', cursive", size: '21px',
+          pick: () => this.setState({ h: v, mode: 'minutes' }) });
+      }
+      for (let i = 0; i < 12; i++) {
+        const v = i === 0 ? 0 : i + 12;
+        const sel = s.h === v;
+        const p = place(INNER, i);
+        marks.push({ label: pad(v), aria: 'Hour ' + pad(v), selected: sel, left: p.left, top: p.top,
+          bg: sel ? '#F7E08C' : 'transparent', border: sel ? '#2A2621' : 'transparent', color: sel ? '#2A2621' : '#4F463D',
+          family: "'DM Mono', ui-monospace, monospace", size: '13px',
+          pick: () => this.setState({ h: v, mode: 'minutes' }) });
+      }
+    } else {
+      for (let i = 0; i < 12; i++) {
+        const v = i * 5;
+        const sel = s.m === v;
+        const p = place(OUTER, i);
+        marks.push({ label: pad(v), aria: pad(v) + ' minutes', selected: sel, left: p.left, top: p.top,
+          bg: sel ? '#F7E08C' : 'transparent', border: sel ? '#2A2621' : 'transparent', color: '#2A2621',
+          family: "'Kalam', 'Segoe Print', cursive", size: '20px',
+          pick: () => this.setState({ m: v }) });
+      }
+    }
+    let len;
+    let angle;
+    if (isHours) {
+      const outer = s.h >= 1 && s.h <= 12;
+      len = outer ? OUTER : INNER;
+      angle = (s.h % 12) * 30;
+    } else {
+      len = OUTER;
+      angle = s.m * 6;
+    }
+    const part = s.h < 12 ? 'Morning' : s.h < 17 ? 'Afternoon' : s.h < 21 ? 'Evening' : 'Night';
+    return {
+      hh: pad(s.h),
+      mm: pad(s.m),
+      part,
+      isHours,
+      isMinutes: !isHours,
+      modeLabel: isHours ? 'Time · pick the hour' : 'Time · pick the minutes',
+      dialLabel: isHours ? 'Hours' : 'Minutes',
+      hourBg: isHours ? '#F7E08C' : 'transparent',
+      hourRot: isHours ? '-2deg' : '0deg',
+      minBg: isHours ? 'transparent' : '#F7E08C',
+      minRot: isHours ? '0deg' : '-2deg',
+      showHours: () => this.setState({ mode: 'hours' }),
+      showMinutes: () => this.setState({ mode: 'minutes' }),
+      marks,
+      handLeft: (C - 1) + 'px',
+      handTop: (C - len) + 'px',
+      handLen: len + 'px',
+      handAngle: angle + 'deg'
+    };
+  }
+}
+</script>
+</body>
+</html>
