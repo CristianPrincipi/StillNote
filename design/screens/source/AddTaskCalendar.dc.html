@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New task: pick a date</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EEE4; color: #2A2621; font-family: 'DM Mono', ui-monospace, 'Courier New', monospace">
+
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+    <dc-import name="AddTaskWhen" hint-size="390px,844px"></dc-import>
+  </div>
+
+  <a href="AddTaskWhen.dc.html" aria-label="Close the calendar" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; background: rgba(42, 38, 33, 0.34)"></a>
+
+  <div role="dialog" aria-label="Pick a date" style="position: absolute; left: 20px; top: 168px; width: 350px; box-sizing: border-box; padding: 24px 14px 14px 14px; display: flex; flex-direction: column; gap: 8px; background: #FCFAF5; border-radius: 2px 2px 3px 22px / 2px 2px 3px 8px; transform: rotate(0.8deg); box-shadow: 0 2px 2px rgba(42, 38, 33, 0.10), 0 34px 40px -26px rgba(20, 16, 12, 0.75)">
+    <span aria-hidden="true" style="position: absolute; top: -13px; left: 132px; width: 88px; height: 26px; background: rgba(243, 238, 228, 0.8); border-left: 1px dashed rgba(42, 38, 33, 0.14); border-right: 1px dashed rgba(42, 38, 33, 0.14); transform: rotate(-2deg)"></span>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; padding: 0 0 4px 8px; border-bottom: 1.2px solid #E39C86">
+      <div style="display: flex; flex-direction: column; gap: 0">
+        <span style="font-size: 11px; letter-spacing: 0.16em; color: #4F463D">{{year}}</span>
+        <h2 aria-live="polite" style="margin: 0; font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 32px; line-height: 1.15">{{monthName}}</h2>
+      </div>
+      <div style="display: flex; align-items: center">
+        <button type="button" onClick="{{prevMonth}}" disabled="{{atCurrent}}" aria-label="Previous month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; opacity: {{prevOpacity}}; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
+        </button>
+        <button type="button" onClick="{{nextMonth}}" aria-label="Next month" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding-top: 4px; font-size: 11px; letter-spacing: 0.12em; color: #4F463D; text-align: center">
+      <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px; column-gap: 2px">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+        <sc-if value="{{c.blank}}" hint-placeholder-val="{{ false }}">
+          <span aria-hidden="true" style="display: block; height: 46px"></span>
+        </sc-if>
+        <sc-if value="{{c.real}}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{c.pick}}" disabled="{{c.disabled}}" aria-label="{{c.aria}}" aria-pressed="{{c.selected}}" style="height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 0 0 0; border: 0; border-radius: 2px 2px 2px 9px / 2px 2px 2px 4px; background: {{c.bg}}; box-shadow: {{c.shadow}}; transform: rotate({{c.rot}}); color: {{c.color}}; font: inherit; cursor: pointer">
+            <span style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.6px solid {{c.ring}}; border-radius: 54% 46% 52% 48% / 47% 55% 45% 53%; font-size: 15px; font-weight: {{c.weight}}">{{c.num}}</span>
+            <span style="display: flex; gap: 2px; height: 5px">
+              <sc-for list="{{c.load}}" as="q" hint-placeholder-count="1">
+                <span style="display: block; width: 5px; height: 5px; box-sizing: border-box; border: 1px solid #2A2621"></span>
+              </sc-for>
+            </span>
+          </button>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; padding-left: 6px">
+      <a href="AddTaskWhen.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; color: #4F463D; text-decoration: none; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase">No date</a>
+      <a href="AddTaskWhen.dc.html" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 22px 0 24px; border-radius: 999px; background: #2A2621; color: #F7E08C; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.06em">
+        {{setLabel}}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+      </a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { off: 0, sel: { y: 2026, m: 9, d: 13 } };
+  }
+  loadFor(y, m, d) {
+    const OCT = { 12: 4, 13: 2, 14: 1, 16: 1, 19: 1, 21: 1, 23: 1, 24: 1, 26: 1, 29: 1 };
+    const NOV = { 2: 1, 3: 1, 9: 2, 16: 1, 23: 1 };
+    if (y === 2026 && m === 9) return OCT[d] || 0;
+    if (y === 2026 && m === 10) return NOV[d] || 0;
+    return 0;
+  }
+  renderVals() {
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const s = this.state || { off: 0, sel: { y: 2026, m: 9, d: 13 } };
+    const base = new Date(2026, 9 + s.off, 1);
+    const y = base.getFullYear();
+    const m = base.getMonth();
+    const first = (base.getDay() + 6) % 7;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const total = Math.ceil((first + dim) / 7) * 7;
+    const todayKey = 2026 * 10000 + 9 * 100 + 12;
+    const selKey = s.sel ? s.sel.y * 10000 + s.sel.m * 100 + s.sel.d : -1;
+    const cells = [];
+    for (let i = 0; i < total; i++) {
+      const n = i - first + 1;
+      if (n < 1 || n > dim) { cells.push({ blank: true, real: false }); continue; }
+      const key = y * 10000 + m * 100 + n;
+      const past = key < todayKey;
+      const isToday = key === todayKey;
+      const selected = key === selKey;
+      const open = past ? 0 : this.loadFor(y, m, n);
+      const load = [];
+      for (let k = 0; k < Math.min(open, 3); k++) load.push({ k });
+      cells.push({
+        blank: false,
+        real: true,
+        num: String(n),
+        disabled: past,
+        selected,
+        aria: n + ' ' + MONTHS[m] + (isToday ? ', today' : '') + (open ? ', ' + open + (open === 1 ? ' task' : ' tasks') : ''),
+        color: past ? '#A39888' : '#2A2621',
+        bg: selected ? '#F7E08C' : 'transparent',
+        shadow: selected ? '0 1px 1px rgba(42, 38, 33, 0.08), 0 9px 10px -8px rgba(42, 38, 33, 0.6)' : 'none',
+        rot: selected ? '-3deg' : '0deg',
+        ring: isToday ? '#2A2621' : 'transparent',
+        weight: isToday || selected ? '500' : '400',
+        load,
+        pick: () => { if (!past) this.setState({ sel: { y, m, d: n } }); }
+      });
+    }
+    let setLabel = 'Set date';
+    if (s.sel) {
+      const sd = new Date(s.sel.y, s.sel.m, s.sel.d);
+      setLabel = 'Set ' + DAYS[sd.getDay()] + ' ' + s.sel.d + ' ' + MONTHS[s.sel.m].slice(0, 3);
+    }
+    return {
+      year: String(y),
+      monthName: MONTHS[m],
+      atCurrent: s.off === 0,
+      prevOpacity: s.off === 0 ? '0.3' : '1',
+      prevMonth: () => { if (s.off > 0) this.setState({ off: s.off - 1 }); },
+      nextMonth: () => this.setState({ off: s.off + 1 }),
+      cells,
+      setLabel
+    };
+  }
+}
+</script>
+</body>
+</html>

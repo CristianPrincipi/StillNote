@@ -43,10 +43,10 @@ body{margin:0}
         <button type="button" onClick="{{prevDay}}" disabled="{{atToday}}" aria-label="Previous day" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; opacity: {{prevOpacity}}; cursor: pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
         </button>
-        <div aria-live="polite" style="display: flex; flex-direction: column; align-items: center; gap: 0">
-          <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 28px; line-height: 1.15">{{dayName}}</span>
+        <a href="AddTaskCalendar.dc.html" aria-label="{{dayName}}, {{dayDate}}. Open the calendar" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 60px; color: #2A2621; text-decoration: none">
+          <span style="font-family: 'Kalam', 'Segoe Print', cursive; font-weight: 700; font-size: 28px; line-height: 1.15; padding: 0 6px; border-bottom: 1.5px dashed rgba(42, 38, 33, 0.5)">{{dayName}}</span>
           <span style="font-size: 11px; letter-spacing: 0.16em; color: #4F463D">{{dayDate}}</span>
-        </div>
+        </a>
         <button type="button" onClick="{{nextDay}}" aria-label="Next day" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
         </button>
@@ -58,10 +58,10 @@ body{margin:0}
         <button type="button" onClick="{{earlier}}" aria-label="30 minutes earlier" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5L8.5 12l6.5 6.5"></path></svg>
         </button>
-        <div aria-live="polite" style="display: flex; flex-direction: column; align-items: center; gap: 2px">
-          <span style="font-size: 30px; font-weight: 500; letter-spacing: 0.04em; line-height: 1.1">{{time}}</span>
+        <a href="AddTaskClock.dc.html" aria-label="{{time}}, {{part}}. Open the clock" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 60px; color: #2A2621; text-decoration: none">
+          <span style="font-size: 30px; font-weight: 500; letter-spacing: 0.04em; line-height: 1.1; padding: 0 6px; border-bottom: 1.5px dashed rgba(42, 38, 33, 0.5)">{{time}}</span>
           <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #4F463D">{{part}}</span>
-        </div>
+        </a>
         <button type="button" onClick="{{later}}" aria-label="30 minutes later" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: #2A2621; cursor: pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"></path></svg>
         </button>
