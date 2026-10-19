@@ -52,6 +52,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -67,6 +68,8 @@ import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.stillnote.data.Priority
 import app.stillnote.data.Reminder
+import app.stillnote.ui.components.CalendarPicker
+import app.stillnote.ui.components.ClockPicker
 import app.stillnote.ui.components.HandText
 import app.stillnote.ui.components.IconPaths
 import app.stillnote.ui.components.InkIcon
@@ -79,8 +82,10 @@ import app.stillnote.ui.components.StillIcons
 import app.stillnote.ui.components.TapSize
 import app.stillnote.ui.components.TapTarget
 import app.stillnote.ui.components.Tape
+import app.stillnote.ui.components.fillInUnderline
 import app.stillnote.ui.components.inkBorder
 import app.stillnote.ui.components.paperShadow
+import app.stillnote.ui.components.partOfDay
 import app.stillnote.ui.components.rememberLineBoxTrim
 import app.stillnote.ui.components.trimLineBox
 import app.stillnote.ui.theme.LocalHandFont
@@ -115,8 +120,48 @@ fun NoteSheetOverlay(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier:
                 .clickable(remember { MutableInteractionSource() }, indication = null, onClick = viewModel::dismiss)
                 .semantics { contentDescription = "Close without saving" },
         )
-        NotePlacement(top = draft.picker.noteTop()) {
+        // Under the calendar or clock, the note is only there to be seen.
+        val behindDialog = if (draft.dialog != null) Modifier.clearAndSetSemantics {} else Modifier
+        SheetPlacement(top = draft.picker.noteTop(), margin = NoteMargin, maxWidth = MaxNoteWidth, modifier = behindDialog) {
             OnPaper { NoteSheet(draft, viewModel, focus) }
+        }
+        draft.dialog?.let { WhenDialogOverlay(it, draft, viewModel) }
+    }
+}
+
+/** The calendar or the clock, over the note, behind a lighter scrim that closes it without changes. */
+@Composable
+private fun WhenDialogOverlay(dialog: WhenDialog, draft: NewTaskDraft, viewModel: NewTaskViewModel) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(StillColors.scrimPicker)
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = viewModel::closeDialog)
+            .semantics { contentDescription = "Close without changes" },
+    )
+    val top = if (dialog == WhenDialog.Calendar) 168.dp else 132.dp
+    SheetPlacement(top = top, margin = PickerMargin, maxWidth = PickerWidth) {
+        when (dialog) {
+            WhenDialog.Calendar -> {
+                val openTasks by viewModel.openTasksByDay.collectAsStateWithLifecycle()
+                CalendarPicker(
+                    initial = draft.date,
+                    today = draft.today,
+                    earliest = draft.earliest,
+                    openTasks = openTasks,
+                    onMonthShown = viewModel::showCalendarMonth,
+                    onSet = viewModel::setDate,
+                    onNoDate = { viewModel.setDate(null) },
+                    noDateEnabled = draft.canClearDate,
+                    noDateHint = "No date. Pick a project first: a task with neither shows nowhere.",
+                )
+            }
+            WhenDialog.Clock -> ClockPicker(
+                initial = remember { viewModel.clockStart() },
+                onSet = viewModel::setTime,
+                onNoTime = { viewModel.setTime(null) },
+                onCancel = viewModel::closeDialog,
+            )
         }
     }
 }
@@ -131,18 +176,23 @@ private fun Picker?.noteTop(): Dp = when (this) {
 
 private val NoteMargin = 24.dp
 private val MaxNoteWidth = 420.dp
+private val PickerMargin = 20.dp
+private val PickerWidth = 350.dp
 
-/** Puts the note at [top], moving it up when the keyboard would otherwise cover it. */
+/**
+ * Puts a sheet [margin] from the sides, at most [maxWidth] wide, at [top], moving it up when the
+ * keyboard or the bottom of the screen would otherwise cover it.
+ */
 @Composable
-private fun NotePlacement(top: Dp, content: @Composable () -> Unit) {
-    val animatedTop by animateDpAsState(top, tween(200), label = "note top")
+private fun SheetPlacement(top: Dp, margin: Dp, maxWidth: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val animatedTop by animateDpAsState(top, tween(200), label = "sheet top")
     Layout(
         content = content,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) { measurables, constraints ->
-        val width = min(constraints.maxWidth - 2 * NoteMargin.roundToPx(), MaxNoteWidth.roundToPx()).coerceAtLeast(0)
+        val width = min(constraints.maxWidth - 2 * margin.roundToPx(), maxWidth.roundToPx()).coerceAtLeast(0)
         val note = measurables.first().measure(Constraints.fixedWidth(width))
         val lowest = constraints.maxHeight - note.height - 20.dp.roundToPx()
         val y = min(animatedTop.roundToPx(), lowest).coerceAtLeast(22.dp.roundToPx())
@@ -312,6 +362,8 @@ private fun TearLine(modifier: Modifier = Modifier) {
 private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Overline("When", Modifier.padding(start = 22.dp))
+        // The day and the time open the calendar and the clock; the arrows stay for a day or half an hour.
+        val dayDate = draft.date?.format(DayDateFormat)?.uppercase()
         Stepper(
             onPrevious = { viewModel.shiftDay(-1) },
             previousLabel = "Previous day",
@@ -319,9 +371,12 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
             previousEnabled = (draft.date ?: draft.today) > draft.earliest,
             onNext = { viewModel.shiftDay(1) },
             nextLabel = "Next day",
+            onValueClick = { viewModel.openDialog(WhenDialog.Calendar) },
+            valueLabel = listOfNotNull(draft.dayName(), dayDate).joinToString(", ") + ". Open the calendar",
         ) {
-            HandText(draft.dayName(), 28f, weight = FontWeight.Bold, lineHeight = 1.15f)
-            MonoText((draft.date ?: draft.today).format(DayDateFormat).uppercase(), 11f, letterSpacing = 0.16.em)
+            HandText(draft.dayName(), 28f, Modifier.fillInUnderline(StillColors.ink), weight = FontWeight.Bold, lineHeight = 1.15f)
+            // Blank under "No date", but kept, so the note doesn't jump when a day is picked.
+            MonoText(dayDate ?: " ", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
         }
         StepperRule()
         Stepper(
@@ -330,18 +385,21 @@ private fun WhenPicker(draft: NewTaskDraft, viewModel: NewTaskViewModel, modifie
             modifier = StepperPadding,
             onNext = { viewModel.shiftTime(1) },
             nextLabel = "30 minutes later",
+            onValueClick = { viewModel.openDialog(WhenDialog.Clock) },
+            valueLabel = (draft.time?.let { "${it.format(TimeFormat)}, ${partOfDay(it.hour)}" } ?: "Any time") + ". Open the clock",
         ) {
             val time = draft.time
             MonoText(
                 time?.format(TimeFormat) ?: "Any time",
                 30f,
+                Modifier.fillInUnderline(StillColors.ink),
                 weight = FontWeight.Medium,
                 color = StillColors.ink,
                 letterSpacing = 0.04.em,
                 lineHeight = 1.1f,
             )
             // Blank under "Any time", but kept, so the note doesn't jump when a time is picked.
-            MonoText(time?.let { partOfDay(it.hour).uppercase() } ?: " ", 11f, Modifier.padding(top = 2.dp), letterSpacing = 0.16.em)
+            MonoText(time?.let { partOfDay(it.hour).uppercase() } ?: " ", 11f, Modifier.padding(top = 3.dp), letterSpacing = 0.16.em)
         }
         // Only a task with a time can be reminded of.
         if (draft.time != null) {
@@ -533,9 +591,3 @@ private fun NewTaskDraft.dayName(): String =
 /** "Today", "Tomorrow" or "Yesterday", otherwise "Wed 14 Oct". */
 private fun NewTaskDraft.shortDay(): String = nearDay() ?: date?.format(DayDateFormat) ?: "No date"
 
-private fun partOfDay(hour: Int): String = when {
-    hour < 12 -> "Morning"
-    hour < 17 -> "Afternoon"
-    hour < 21 -> "Evening"
-    else -> "Night"
-}

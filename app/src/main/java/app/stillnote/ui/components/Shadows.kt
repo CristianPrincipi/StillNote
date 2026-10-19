@@ -48,6 +48,12 @@ object Shadows {
         PaperShadow(StillColors.ink.copy(alpha = 0.6f), dy = 9.dp, blur = 10.dp, spread = (-8).dp),
     )
 
+    /** The day picked in the calendar picker. */
+    val pickedDay = listOf(
+        PaperShadow(StillColors.ink.copy(alpha = 0.08f), dy = 1.dp, blur = 1.dp),
+        PaperShadow(StillColors.ink.copy(alpha = 0.6f), dy = 9.dp, blur = 10.dp, spread = (-8).dp),
+    )
+
     /** The second sheet behind the "+" pad, then its lift. */
     val addPad = listOf(
         PaperShadow(StillColors.canary, dx = 4.dp, dy = 4.dp, spread = (-1.6).dp),

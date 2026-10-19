@@ -120,6 +120,7 @@ private fun MainScreens(settings: SettingsViewModel, setup: SetupViewModel, laun
 
     BackHandler(enabled = sheetOpen || addMenuOpen || settingsOpen || tab != Tab.Tasks) {
         when {
+            draft?.dialog != null -> newTask.closeDialog()
             draft != null -> newTask.dismiss()
             newProjectOpen -> newProjectOpen = false
             addMenuOpen -> addMenuOpen = false

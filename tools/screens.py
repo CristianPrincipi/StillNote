@@ -194,10 +194,20 @@ def main():
     tap("Next day")
     shot("m3-new-task-any-time")
     tap("30 minutes later")  # from "Any time" to the next half hour
-    shown = next(label for label, _ in nodes() if re.fullmatch(r"\d\d:\d\d", label))
+    # The time is a button that opens the clock: "17:30, Afternoon. Open the clock".
+    shown = next(label[:5] for label, _ in nodes() if re.fullmatch(r"\d\d:\d\d, \w+\. Open the clock", label))
     minutes = int(shown[:2]) * 60 + int(shown[3:])
     tap("30 minutes later", times=(18 * 60 - minutes) // 30 % 48)
     shot("07-new-task-date-time")
+
+    tap("Tomorrow, TUE 13 OCT. Open the calendar")
+    shot("07a-calendar-picker")
+    close_sheet()  # the scrim over the note closes the calendar without changes
+    tap("18:00, Evening. Open the clock")
+    shot("07b-clock-hours")
+    tap("Hour 18")  # picking an hour moves on to the minutes
+    shot("07c-clock-minutes")
+    tap("CANCEL")
 
     tap("Set priority")
     tap("High")
@@ -262,7 +272,8 @@ def main():
     back()
 
     # The first-run screens and Settings are compared by tools/notion_e2e.py, which needs a fake Notion.
-    for name in ("05-today", "06-new-task", "07-new-task-date-time", "08-new-task-priority", "09-calendar",
+    for name in ("05-today", "06-new-task", "07-new-task-date-time", "07a-calendar-picker", "07b-clock-hours",
+                 "07c-clock-minutes", "08-new-task-priority", "09-calendar",
                  "10-projects", "11-projects-add-menu", "12-new-task-project", "13-new-project"):
         print(f"{name}: {compare(name):.1%} of pixels differ")
 

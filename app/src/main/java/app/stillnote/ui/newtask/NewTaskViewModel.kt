@@ -10,19 +10,28 @@ import app.stillnote.data.ReminderSettings
 import app.stillnote.data.Task
 import app.stillnote.data.TaskDraft
 import app.stillnote.data.TaskRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 
 enum class Picker { When, Priority, Project }
+
+/** The cards that open over the note from the When picker's day and time. */
+enum class WhenDialog { Calendar, Clock }
 
 /** The reminder stepper's stops, in order: the default, none, then the minutes before. */
 val ReminderSteps: List<Int?> = listOf(null, Reminder.None) + Reminder.choices
@@ -47,6 +56,8 @@ data class NewTaskDraft(
     /** The task's own reminder, or null for the default in Settings. */
     val reminder: Int? = null,
     val picker: Picker? = null,
+    /** The calendar or clock lying over the note, if one is open. */
+    val dialog: WhenDialog? = null,
 ) {
     val time: LocalTime? get() = minutes?.let { LocalTime.of(it / 60, it % 60) }
 
@@ -55,8 +66,12 @@ data class NewTaskDraft(
 
     /** The clock can't go back before today, or before the day of an overdue task being changed. */
     val earliest: LocalDate get() = minOf(today, editing?.date ?: today)
+
+    /** A task with no date and no project would show on no screen, so only a task with a project can lose its date. */
+    val canClearDate: Boolean get() = project != null
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NewTaskViewModel(
     private val tasks: TaskRepository,
     private val clock: AppClock,
@@ -72,6 +87,23 @@ class NewTaskViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val features: StateFlow<Features> = tasks.features.stateIn(viewModelScope, SharingStarted.Eagerly, Features())
+
+    /** The month the calendar picker shows, or null while it is closed. */
+    private val calendarMonth = MutableStateFlow<YearMonth?>(null)
+
+    /**
+     * The open tasks on each day of the calendar picker's month, for its squares. The task being
+     * changed isn't counted: the squares show what else is on a day.
+     */
+    val openTasksByDay: StateFlow<Map<LocalDate, Int>> =
+        combine(calendarMonth, _draft.map { it?.editing?.id }.distinctUntilChanged(), ::Pair)
+            .flatMapLatest { (month, editing) ->
+                if (month == null) return@flatMapLatest flowOf(emptyMap())
+                tasks.observeTasks(month.atDay(1), month.atEndOfMonth()).map { all ->
+                    all.filter { !it.done && it.id != editing }.mapNotNull { it.date }.groupingBy { it }.eachCount()
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     /** Settings' reminder, which a task follows unless it has its own. */
     val reminderDefault: StateFlow<Int> =
@@ -146,12 +178,40 @@ class NewTaskViewModel(
     fun shiftTime(steps: Int) = edit {
         val current = minutes
         if (current != null) return@edit copy(minutes = (current + steps * STEP_MINUTES).mod(DAY_MINUTES))
-        val now = clock.now()
-        val next = ((now.hour * 60 + now.minute) / STEP_MINUTES + 1) * STEP_MINUTES
+        val next = nextHalfHour()
         val first = if (steps > 0) next else next - STEP_MINUTES
         // Late in the evening the next half hour is tomorrow's.
         val day = date ?: today
         copy(minutes = first % DAY_MINUTES, date = if (first >= DAY_MINUTES && day == today) day.plusDays(1) else day)
+    }
+
+    fun openDialog(dialog: WhenDialog) = edit { copy(dialog = dialog) }
+
+    /** Closes the calendar or clock without changing anything. */
+    fun closeDialog() = edit { copy(dialog = null) }
+
+    /** The day picked on the calendar, or null for "No date", which also takes the time away. */
+    fun setDate(date: LocalDate?) = edit {
+        if (date == null) copy(date = null, minutes = null, dialog = null)
+        else copy(date = date.coerceAtLeast(earliest), dialog = null)
+    }
+
+    /** The time picked on the clock, or null for "No time". A time needs a day, so an undated task gets today. */
+    fun setTime(time: LocalTime?) = edit {
+        if (time == null) copy(minutes = null, dialog = null)
+        else copy(minutes = time.hour * 60 + time.minute, date = date ?: today, dialog = null)
+    }
+
+    /** Where the clock opens: the task's time, or from "any time" the next half hour. */
+    fun clockStart(): LocalTime {
+        val start = _draft.value?.minutes ?: (nextHalfHour() % DAY_MINUTES)
+        return LocalTime.of(start / 60, start % 60)
+    }
+
+    /** Counts the open tasks of [month] for the calendar picker, asking Notion for them too. */
+    fun showCalendarMonth(month: YearMonth) {
+        calendarMonth.value = month
+        tasks.refresh(month.atDay(1), month.atEndOfMonth())
     }
 
     /** Moves along [ReminderSteps], stopping at either end. */
@@ -185,6 +245,12 @@ class NewTaskViewModel(
     }
 
     private fun edit(change: NewTaskDraft.() -> NewTaskDraft) = _draft.update { it?.change() }
+
+    /** The next half hour from now, in minutes from midnight; late in the evening that's past 24:00. */
+    private fun nextHalfHour(): Int {
+        val now = clock.now()
+        return ((now.hour * 60 + now.minute) / STEP_MINUTES + 1) * STEP_MINUTES
+    }
 
     private fun Task.asDraft() = TaskDraft(title, date, time, priority, project)
 

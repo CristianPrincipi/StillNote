@@ -40,6 +40,7 @@ val DayPostItShape: Shape = CurlShape(top = 2.dp, bottomEnd = 2.dp, curlX = 9.dp
 val MenuSlipShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 14.dp, curlY = 6.dp)
 val PileSheetShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 22.dp, curlY = 8.dp)
 val PreviewPostItShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 16.dp, curlY = 6.dp)
+val PickerCardShape: Shape = CurlShape(top = 2.dp, bottomEnd = 3.dp, curlX = 22.dp, curlY = 8.dp)
 
 /** The slightly irregular circle of check buttons, the today ring and radio buttons. */
 val HandDrawnCircle: Shape = object : Shape {
