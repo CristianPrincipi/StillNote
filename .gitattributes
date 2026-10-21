@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.ttf binary
+
+# The bundled licence texts are redistributed as they came, so git must not change their line endings.
+app/src/main/assets/licenses/** -text

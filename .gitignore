@@ -25,3 +25,7 @@ secrets.properties
 
 # Python
 __pycache__/
+
+# Local tooling
+.claude/
+.mcp.json
