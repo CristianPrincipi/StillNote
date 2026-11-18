@@ -225,6 +225,20 @@ class NotionSyncTest {
     }
 
     @Test
+    fun aDeletionNotionRefusesIsDroppedOnceUndoIsOver() = runBlocking {
+        tasks.insert(synced("a", "p-a"))
+        tasks.setTrashed("a", true, clock)
+        notion.failUpdate["p-a"] = Kind.Rejected
+
+        sync.push()
+        assertEquals(State("p-a", dirty = true, failed = true, trashed = true), row("a"))
+        clock += 60_000
+        sync.push()
+        assertNull(row("a"))
+        assertEquals(0, tasks.observeFailedCount().first())
+    }
+
+    @Test
     fun changesWaitWhileOfflineOrBusy_andARejectedTokenIsRemembered() = runBlocking {
         tasks.insert(local("a"))
 
