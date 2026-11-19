@@ -169,8 +169,17 @@ class NotionClient(
                 attempt++
                 continue
             }
-            throw NotionException(kindOf(status), status, code, message)
+            throw NotionException(kindOf(status, message), status, code, message)
         }
+    }
+
+    /**
+     * Notion answers a write to a page in its trash with a 400 ("Can't edit block that is
+     * archived"), not a 404; for the app that page is gone all the same.
+     */
+    private fun kindOf(status: Int, message: String?) = when {
+        status == 400 && message != null && GONE.containsMatchIn(message) -> Kind.NotFound
+        else -> kindOf(status)
     }
 
     private fun kindOf(status: Int) = when (status) {
@@ -189,6 +198,7 @@ class NotionClient(
         const val MAX_ATTEMPTS = 3
         const val MAX_WAIT_MILLIS = 20_000L
         val JSON = "application/json".toMediaType()
+        val GONE = Regex("archived|in trash", RegexOption.IGNORE_CASE)
     }
 }
 

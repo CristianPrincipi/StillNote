@@ -86,10 +86,11 @@ abstract class TaskDao {
     // Housekeeping.
 
     /**
-     * Drops tasks deleted before [before] that have nothing left to push. The delay keeps a
-     * deleted task around for as long as it can still be brought back with Undo.
+     * Drops tasks deleted before [before] that have nothing left to push, or whose deletion
+     * Notion refused: a refused deletion would otherwise stay, unseen, behind "Couldn't save."
+     * for good. The delay keeps a deleted task around for as long as Undo can bring it back.
      */
-    @Query("DELETE FROM tasks WHERE trashed = 1 AND changedAt < :before AND (pageId IS NULL OR dirty = 0)")
+    @Query("DELETE FROM tasks WHERE trashed = 1 AND changedAt < :before AND (pageId IS NULL OR dirty = 0 OR failed = 1)")
     abstract suspend fun purgeTrashed(before: Long)
 
     @Query("DELETE FROM tasks WHERE pageId IS NOT NULL")

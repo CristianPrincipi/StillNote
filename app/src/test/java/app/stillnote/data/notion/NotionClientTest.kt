@@ -229,4 +229,12 @@ class NotionClientTest {
         server.close()
         assertEquals(Kind.Network, failure { client.checkToken("t") }.kind)
     }
+
+    @Test
+    fun `takes a page in Notion's trash for a missing one`() = runTest {
+        respond(400, """{"code": "validation_error", "message": "Can't edit block that is archived. You must unarchive the block before editing."}""")
+        respond(400, """{"code": "validation_error", "message": "Can't edit page that is in trash."}""")
+        assertEquals(Kind.NotFound, failure { client.updatePage("t", "p-1", JsonObject(emptyMap()), false) }.kind)
+        assertEquals(Kind.NotFound, failure { client.updatePage("t", "p-1", null, true) }.kind)
+    }
 }
